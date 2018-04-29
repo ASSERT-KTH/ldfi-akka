@@ -1,0 +1,11 @@
+*.iml
+.idea/*
+target/*
+project/target/*
+*.log
+*.txt
+scalafix/input/target/*
+scalafix/project/*
+scalafix/rules/target/*
+scalafix/target/*
+scalafix/tests/target/*
