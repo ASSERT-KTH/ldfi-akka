@@ -1,11 +1,10 @@
+
 package fix
 
 import scalafix._
 import scala.meta._
 
 final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(index, "Ldfiakka_v1_0") {
-  //TODO: Lös vad som är innanför boolean. Tror jag får helt enkelt skriva det som en term som innehåller strängarna
-  //val comp = Term.ApplyInfix(Term.Name("crashes"), Term.Name("&&"), List(), List(Term.Name("inject")))
   override def fix(ctx: RuleCtx): Patch = {
     //TODO: 1. I add greenlight when the system is sending messages. I should check whether I am inside an actor class.
     //TODO: 2. Fix bug with addExtendsWithActorLogging. It messes up the other pathches when concatenated currently.
@@ -13,7 +12,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     //ctx.debugIndex()
     //println(s"Tree.syntax: " + ctx.tree.syntax)
     //println(s"Tree.structure: " + ctx.tree.structure)
-    
+
     addControllerGreenLight(ctx) + addLoggingReceive(ctx) // + addExtendsWithActorLogging(ctx)
   }
 
@@ -26,7 +25,6 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     }.asPatch
 
   }
-
   def constructTemplate(templ: Template): Template = {
     val inits = templ.inits
     var isExtendedWithActor = false
@@ -46,43 +44,23 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     else{
       templ
     }
-
   }
-
 
   def addLoggingReceive (ctx: RuleCtx): Patch = {
     ctx.tree.collect {
-      case t @ Defn.Def(_, name, _, _, _, body) =>
-        if(name.value == "receive"){
-          val newBody = Term.Apply(Term.Name("LoggingReceive"), List[Term](body))
-          ctx.replaceTree(body, newBody.toString)
-        }
-        else {
-          ctx.replaceTree(name, name.toString)
-        }
-
+      case t @ Defn.Def(_, name, _, _, _, body) if name.value == "receive" =>
+        val newBody = Term.Apply(Term.Name("LoggingReceive"), List[Term](body))
+        ctx.replaceTree(body, newBody.toString)
+      case _ => Patch.empty
     }.asPatch
   }
 
-
   def addControllerGreenLight(ctx: RuleCtx): Patch = {
     ctx.tree.collect {
-      case appInf:Term.ApplyInfix =>
-        val lhs = appInf.lhs
-        val op = appInf.op
-        val targs = appInf.targs
-        val args = appInf.args
-        appInf.op match {
-          case t:Term.Name =>
-            if(t.value == "!") {
-              val newIfTree = getIfTerm(lhs, op, args)
-              ctx.replaceTree(appInf, newIfTree.toString)
-              //ctx.removeTokens(appInf.tokens) + ctx.addRight(t, newIfTree.toString)
-            }
-            else{
-              ctx.replaceTree(t, t.toString)
-            }
-        }
+      case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
+        val newIfTree = getIfTerm(lhs, op, args)
+        ctx.replaceTree(appInf, newIfTree.toString)
+      case _ => Patch.empty
     }.asPatch
   }
 
@@ -95,13 +73,5 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     Term.If(condp, thenp, elsep)
   }
 
-  def exampleIntReplacer(ctx: RuleCtx): Patch = {
-    ctx.tree.collect {
-      case t @ Lit.Int(value) =>
-        val newValue = value + 1
-        ctx.removeTokens(t.tokens) + ctx.addRight(t, newValue.toString)
-    }.asPatch
-
-  }
 
 }
