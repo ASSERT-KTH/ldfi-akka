@@ -31,10 +31,10 @@ object Node {
   def props: Props = Props(new Node())
 }
 
-class Node extends Actor with ActorLogging {
+class Node extends Actor {
   val name = self.path.name
 
-  def receive = LoggingReceive {
+  def receive = {
     case Broadcast(pload) =>
       //Log the payload in global logs
       logBroadcast(pload)

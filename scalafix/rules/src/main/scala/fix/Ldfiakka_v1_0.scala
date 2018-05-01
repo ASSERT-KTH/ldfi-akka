@@ -6,14 +6,11 @@ import scala.meta._
 
 final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(index, "Ldfiakka_v1_0") {
   override def fix(ctx: RuleCtx): Patch = {
-    //TODO: 1. I add greenlight when the system is sending messages. I should check whether I am inside an actor class.
-    //TODO: 2. Fix bug with addExtendsWithActorLogging. It messes up the other pathches when concatenated currently.
-
     //ctx.debugIndex()
     //println(s"Tree.syntax: " + ctx.tree.syntax)
-    //println(s"Tree.structure: " + ctx.tree.structure)
-
-    addControllerGreenLight(ctx) + addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx)
+    println(s"Tree.structure: " + ctx.tree.structure)
+    //addControllerGreenLight(ctx) +
+     addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) + addControllerGreenLight(ctx)
   }
 
   def addExtendsWithActorLogging(ctx: RuleCtx): Patch = {
@@ -27,25 +24,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
         }
         else Patch.empty
     }.asPatch
-
   }
-
-  def isActorClassWithNoLogging(templ: Template): Boolean = {
-    val inits = templ.inits
-    var isExtendedWithActor = false
-    var isExtendedWithActorLogging = false
-    for(init <- inits){
-      if(init.tpe.toString == "Actor"){
-        isExtendedWithActor = true
-      }
-      if(init.tpe.toString == "ActorLogging"){
-        isExtendedWithActorLogging = true
-      }
-    }
-    (isExtendedWithActor && !isExtendedWithActorLogging)
-  }
-
-
 
   def addLoggingReceive (ctx: RuleCtx): Patch = {
     ctx.tree.collect {
@@ -57,13 +36,22 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def addControllerGreenLight(ctx: RuleCtx): Patch = {
+    var patch = Patch.empty
     ctx.tree.collect {
-      case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
-        val newIfTree = getIfTerm(lhs, op, args)
-        ctx.replaceTree(appInf, newIfTree.toString)
-      case _ => Patch.empty
-    }.asPatch
+      case templ @ Template (_, inits, _, stats) if isExtendedWithActor(inits) =>
+        for(stat <- stats){
+          stat.collect  {
+            case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
+              val newIfTree = getIfTerm(lhs, op, args)
+              patch = patch + ctx.replaceTree(appInf, newIfTree.toString)
+            case _ => Patch.empty
+          }
+        }
+    }
+    patch
   }
+
+  //Helper functions
 
   def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
     val listofargs = List[Term](Term.Name("self"), lhs)
@@ -74,5 +62,26 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     Term.If(condp, thenp, elsep)
   }
 
+  def isActorClassWithNoLogging(templ: Template): Boolean = {
+    val inits = templ.inits
+    (isExtendedWithActor(inits) && !isExtendedWithActorLogging(inits))
+  }
 
+  def isExtendedWithActor(inits: List[Init]): Boolean = {
+    var isExtendedWithActor = false
+    for (init <- inits){
+      if(init.tpe.toString == "Actor")
+        isExtendedWithActor = true
+    }
+    isExtendedWithActor
+  }
+
+  def isExtendedWithActorLogging(inits: List[Init]): Boolean = {
+    var isExtendedWithActorLogging = false
+    for (init <- inits){
+      if(init.tpe.toString == "ActorLogging")
+        isExtendedWithActorLogging = true
+    }
+    isExtendedWithActorLogging
+  }
 }
