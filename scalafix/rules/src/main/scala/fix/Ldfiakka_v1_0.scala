@@ -9,7 +9,6 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     //ctx.debugIndex()
     //println(s"Tree.syntax: " + ctx.tree.syntax)
     println(s"Tree.structure: " + ctx.tree.structure)
-    //addControllerGreenLight(ctx) +
      addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) + addControllerGreenLight(ctx)
   }
 
