@@ -13,38 +13,39 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     //println(s"Tree.syntax: " + ctx.tree.syntax)
     //println(s"Tree.structure: " + ctx.tree.structure)
 
-    addControllerGreenLight(ctx) + addLoggingReceive(ctx) // + addExtendsWithActorLogging(ctx)
+    addControllerGreenLight(ctx) + addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx)
   }
 
   def addExtendsWithActorLogging(ctx: RuleCtx): Patch = {
     ctx.tree.collect {
-      case t @ Defn.Class(dc1, dc2, dc3, dc4, template) =>
-        val newTemplate = constructTemplate(template)
-        val newClass = Defn.Class(dc1, dc2, dc3, dc4, newTemplate)
-        ctx.replaceTree(t, newClass.toString)
+      case parent @ Defn.Class(_, _, _, _, template) =>
+        if(isActorClassWithNoLogging(template)){
+          template.inits.lastOption match {
+            case Some(parent) => ctx.addRight(parent, " with ActorLogging")
+            case None => Patch.empty //This should never happen.
+          }
+        }
+        else Patch.empty
     }.asPatch
 
   }
-  def constructTemplate(templ: Template): Template = {
+
+  def isActorClassWithNoLogging(templ: Template): Boolean = {
     val inits = templ.inits
     var isExtendedWithActor = false
+    var isExtendedWithActorLogging = false
     for(init <- inits){
       if(init.tpe.toString == "Actor"){
         isExtendedWithActor = true
       }
+      if(init.tpe.toString == "ActorLogging"){
+        isExtendedWithActorLogging = true
+      }
     }
-
-    if(isExtendedWithActor){
-      val newInit = Init(Type.Name("ActorLogging"), Name(""), Nil)
-      val newInits = inits :+ newInit
-      println("oldinits: " + inits)
-      println("newinits: " + newInits)
-      Template(templ.early, newInits, templ.self, templ.stats)
-    }
-    else{
-      templ
-    }
+    (isExtendedWithActor && !isExtendedWithActorLogging)
   }
+
+
 
   def addLoggingReceive (ctx: RuleCtx): Patch = {
     ctx.tree.collect {
