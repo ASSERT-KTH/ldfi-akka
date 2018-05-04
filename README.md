@@ -36,9 +36,6 @@ This project uses the MIT license.
 
 This project is still under work in progress and has many known [issues](https://github.com/KTH/ldfi-akka/issues). With that being said, all kinds of issues or pull requests are more than welcome!
 
-## Authors
-
-* Yonas Ghidei
 
 ## Acknowledgements
 
