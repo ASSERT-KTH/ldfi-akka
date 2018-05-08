@@ -8,11 +8,19 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   override def fix(ctx: RuleCtx): Patch = {
     //ctx.debugIndex()
     //println(s"Tree.syntax: " + ctx.tree.syntax)
-    println(s"Tree.structure: " + ctx.tree.structure)
-     addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) + addControllerGreenLight(ctx)
+    //println(s"Tree.structure: " + ctx.tree.structure)
+    importController(ctx) + addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) + addControllerGreenLight(ctx)
+  }
+
+  def importController(ctx: RuleCtx): Patch = {
+    //import Controller.Controller
+    val importee = Importee.Name(Name.Indeterminate("Controller"))
+    val importer = Importer(Term.Name("Controller"), List(importee))
+    ctx.addGlobalImport(importer)
   }
 
   def addExtendsWithActorLogging(ctx: RuleCtx): Patch = {
+    //class _ extends Actor => class _ extends Actor with ActorLogging
     ctx.tree.collect {
       case parent @ Defn.Class(_, _, _, _, template) =>
         if(isActorClassWithNoLogging(template)){
@@ -26,15 +34,16 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def addLoggingReceive (ctx: RuleCtx): Patch = {
+    //class _ extends Actor => class _ extends Actor with ActorLogging
     ctx.tree.collect {
       case t @ Defn.Def(_, name, _, _, _, body) if name.value == "receive" =>
-        val newBody = Term.Apply(Term.Name("LoggingReceive"), List[Term](body))
-        ctx.replaceTree(body, newBody.toString)
+        ctx.addLeft(body, "LoggingReceive ")
       case _ => Patch.empty
     }.asPatch
   }
 
   def addControllerGreenLight(ctx: RuleCtx): Patch = {
+    //_ ! _ => if(Controller.greenLight) _ ! _ else {}
     var patch = Patch.empty
     ctx.tree.collect {
       case templ @ Template (_, inits, _, stats) if isExtendedWithActor(inits) =>

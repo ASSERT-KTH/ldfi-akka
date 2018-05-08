@@ -12,8 +12,6 @@ import scala.collection.{mutable, _}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-
-
 case class Start(bcast: Broadcast)
 case class Broadcast(pload: String)
 case class Log(pload: String)

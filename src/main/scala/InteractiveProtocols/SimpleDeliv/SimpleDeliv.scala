@@ -78,12 +78,10 @@ class SimpleDeliv {
   //Creating actor system
   val system = ActorSystem("system")
 
-
-  //Here, make program rewrite so that all Nodes are run on a single thread
   //Creating nodes
-  val A = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "A")
-  val B = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "B")
-  val C = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "C")
+  val A = system.actorOf(Node.props, "A")
+  val B = system.actorOf(Node.props, "B")
+  val C = system.actorOf(Node.props, "C")
 
   //Creating an immutable neighboring list. No neighbors can be added dynamically for now.
   val actors = List(A, B, C)

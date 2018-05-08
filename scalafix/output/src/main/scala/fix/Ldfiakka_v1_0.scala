@@ -11,7 +11,7 @@ import akka.event._
 import scala.collection.{mutable, _}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import akka.testkit.CallingThreadDispatcher
+import Controller.Controller
 
 case class Start(bcast: Broadcast)
 case class Broadcast(pload: String)
@@ -35,14 +35,14 @@ object Node {
 
 class Node extends Actor with ActorLogging {
   val name = self.path.name
-  def receive = LoggingReceive({
-  case Broadcast(pload) =>
-    logBroadcast(pload)
-  case Start(Broadcast(pload)) =>
-    sendBroadcast(Broadcast(pload))
-    logBroadcast(pload)
-    context.system.terminate()
-})
+  def receive = LoggingReceive {
+    case Broadcast(pload) =>
+      logBroadcast(pload)
+    case Start(Broadcast(pload)) =>
+      sendBroadcast(Broadcast(pload))
+      logBroadcast(pload)
+      context.system.terminate()
+  }
   def sendBroadcast(broadcast: Broadcast): Unit = {
     Relations.relations.get(name) match {
       case Some(neighbors: List[ActorRef]) =>
@@ -60,17 +60,14 @@ class Node extends Actor with ActorLogging {
   }
 }
 
-
 class SimpleDeliv {
   //Creating actor system
   val system = ActorSystem("system")
 
-
-  //Here, make program rewrite so that all Nodes are run on a single thread
   //Creating nodes
-  val A = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "A")
-  val B = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "B")
-  val C = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "C")
+  val A = system.actorOf(Node.props, "A")
+  val B = system.actorOf(Node.props, "B")
+  val C = system.actorOf(Node.props, "C")
 
   //Creating an immutable neighboring list. No neighbors can be added dynamically for now.
   val actors = List(A, B, C)

@@ -1,23 +1,5 @@
 package InteractiveProtocols.RetryDeliv
 
-
-//RETRY DELIV
-/*
-class Node extends Actor with ActorLogging {
-  var logs = ListBuffer[Log]()
-  val name = self.path.name
-  def receive = LoggingReceive {
-    case Broadcast(pload) =>
-      Relation.relations.get(name) match {
-        case Some(neighbors:ListBuffer[ActorRef]) => neighbors.foreach(neigh => neigh ! Broadcast(pload))
-        case None => //Actor has no neighbors. Do nothing.
-      }
-      //Log payload received broadcast
-      logs += Log(pload)
-  }
-}
-*/
-
 import java.util.concurrent.TimeUnit
 
 import Controller.Controller
@@ -42,7 +24,6 @@ object Relations {
 
 //Global logs
 object Logs {
-
   //Hashmap is mutable, but no risk of race-condition because each actor only mutate its own logs.
   var logs = immutable.HashMap[String, mutable.Set[Log]]()
 }
@@ -55,12 +36,10 @@ object Node {
 class Node extends Actor with ActorLogging {
   val name = self.path.name
 
-  def receive = LoggingReceive {
+  def receive = LoggingReceive ({
     case Broadcast(pload) =>
       //Log the payload in global logs
       logBroadcast(pload)
-      //Broadcast this message to all neighbors
-      sendBroadcast(Broadcast(pload))
 
     case Start(Broadcast(pload)) =>
       //Broadcast this message to all neighbors
@@ -70,7 +49,7 @@ class Node extends Actor with ActorLogging {
       //Right now I'm just killing the Start actor after broadcasting the message.
       //TODO: Find much better way of doing this, i.e, if no messages has been sent, then finish or something
       context.system.terminate()
-  }
+  })
 
   def sendBroadcast(broadcast: Broadcast): Unit = {
     Relations.relations.get(name) match {
@@ -99,10 +78,12 @@ class RetryDeliv {
   //Creating actor system
   val system = ActorSystem("system")
 
+
+  //Here, make program rewrite so that all Nodes are run on a single thread
   //Creating nodes
-  val A = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "A")
-  val B = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "B")
-  val C = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "C")
+  val A = system.actorOf(Node.props, "A")
+  val B = system.actorOf(Node.props, "B")
+  val C = system.actorOf(Node.props, "C")
 
   //Creating an immutable neighboring list. No neighbors can be added dynamically for now.
   val actors = List(A, B, C)
