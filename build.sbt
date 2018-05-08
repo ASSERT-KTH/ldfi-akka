@@ -13,9 +13,10 @@ libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.5.11"
 
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.20"
 
-libraryDependencies += "org.sat4j" % "org.sat4j.sat" % "2.3.0"
+libraryDependencies += "org.sat4j" % "org.sat4j.core" % "2.3.1"
 
-libraryDependencies += "org.sat4j" % "org.sat4j.pom" % "2.3.1" pomOnly()
+
+//libraryDependencies += "org.sat4j" % "org.sat4j.pom" % "2.3.1" pomOnly()
 
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 

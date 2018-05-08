@@ -6,8 +6,10 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 import scala.io.{BufferedSource, Source}
+import BooleanFormulas._
 
 object AkkaParser {
+
 
   def run(input: BufferedSource): FormattedLogs = {
     Clock.reset()

@@ -23,7 +23,7 @@ class CNFConverterSuite extends FunSuite {
 
   def testaddLiteralsToClause(): Unit = {
     val formula = new Formula
-    val clause = new Clause(formula)
+    val clause = new Clause
     val row = Row("A", "B", "1")
     val msg = Message("A", "B", "1")
     CNFConverter.addRowToClause(formula, clause, row)

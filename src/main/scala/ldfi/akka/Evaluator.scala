@@ -1,10 +1,12 @@
+package ldfi.akka
+
 import java.io.PrintWriter
 
 import BooleanFormulas._
-import Parser.{AkkaParser, DimacsParser}
 import Controller.Controller
 import InteractiveProtocols.RetryDeliv.RetryDeliv
 import InteractiveProtocols.SimpleDeliv.SimpleDeliv
+import Parser.{AkkaParser, DimacsParser}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.Source

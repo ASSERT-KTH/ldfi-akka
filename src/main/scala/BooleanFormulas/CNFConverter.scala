@@ -4,14 +4,14 @@ import Parser.AkkaParser.{FormattedLogs, Row}
 
 
 object CNFConverter {
-//TODO: DON'T ADD EXISTING LITERALS TO A NEW CLAUSE!!!
+
   def run(formattedLog: FormattedLogs, formula: Formula): Unit = {
-    val clause = new Clause(formula)
+    val clause = new Clause
     for (line <- formattedLog.rows){
       addRowToClause(formula, clause, line)
     }
     //prettyPrintClause(clause)
-    //TODO: CHECK IF CLAUSE IS CONTAINED
+
     formula.addClause(clause)
 
   }

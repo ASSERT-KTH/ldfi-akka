@@ -28,7 +28,7 @@ object DimacsParser {
       body = body + "0" + "\n"
     }
     //write header
-    bw.write("p cnf " + formula.literals.size.toString() + " " + totalclauses.toString() + "\n")
+    bw.write("p cnf " + formula.literalsToId.size.toString() + " " + totalclauses.toString() + "\n")
 
     //remove last newline
     body = body.substring(0, body.length() - 1)
