@@ -6,11 +6,10 @@ import java.io.{BufferedWriter, FileWriter, PrintWriter}
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.reader.DimacsReader
 import org.sat4j.specs.{IProblem, IVecInt}
-import BooleanFormulas.BooleanFormula._
-import BooleanFormulas._
-import Parser.AkkaParser.Row
+import ldfi.akka.BooleanFormulas.BooleanFormula._
+import ldfi.akka.BooleanFormulas._
+import ldfi.akka.Parser.AkkaParser.Row
 import org.scalatest.FunSuite
-
 
 import scala.io.Source
 

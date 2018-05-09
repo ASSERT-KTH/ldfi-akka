@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor._
 import akka.event._
+import ldfi.akka.Controller.Controller
 
 import scala.collection.{mutable, _}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import Controller.Controller
 
 case class Start(bcast: Broadcast)
 case class Broadcast(pload: String)

@@ -1,8 +1,8 @@
-package Parser
+package ldfi.akka.Parser
 
 import java.io.{BufferedWriter, File, FileWriter}
 
-import BooleanFormulas.BooleanFormula._
+import ldfi.akka.BooleanFormulas.BooleanFormula._
 
 import scala.collection.mutable.HashMap
 

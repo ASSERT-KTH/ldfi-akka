@@ -3,10 +3,9 @@ package ldfi.akka
 import java.io.PrintWriter
 
 import BooleanFormulas._
-import Controller.Controller
 import InteractiveProtocols.RetryDeliv.RetryDeliv
 import InteractiveProtocols.SimpleDeliv.SimpleDeliv
-import Parser.{AkkaParser, DimacsParser}
+import ldfi.akka.Parser.{AkkaParser, DimacsParser}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
@@ -39,12 +38,12 @@ object Evaluator {
         "**********************************************************************\n\n")
 
       //Reset the internal state of the Controller object. THIS IS A HACK.
-      Controller.reset()
+      Controller.Controller.reset()
 
       //Clear the logs
       new PrintWriter("logs.log") {write("");close()}
 
-      Controller.setSolutions(List(injections))
+      Controller.Controller.setSolutions(List(injections))
 
       //Create new program and run it
       val program = prog match {

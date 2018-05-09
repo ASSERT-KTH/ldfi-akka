@@ -1,6 +1,7 @@
 package Parser
 
-import Parser.AkkaParser.{FormattedLogs, Row}
+import ldfi.akka.Parser.AkkaParser
+import ldfi.akka.Parser.AkkaParser.{FormattedLogs, Row}
 import org.scalatest.FunSuite
 
 import scala.io.{BufferedSource, Source}

@@ -13,9 +13,9 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def importController(ctx: RuleCtx): Patch = {
-    //import Controller.Controller
-    val importee = Importee.Name(Name.Indeterminate("Controller"))
-    val importer = Importer(Term.Name("Controller"), List(importee))
+    //import Controller
+    val importee = Importee.Name(Name.Indeterminate("ldfi/akka/Controller"))
+    val importer = Importer(Term.Name("ldfi/akka/Controller"), List(importee))
     ctx.addGlobalImport(importer)
   }
 
@@ -63,7 +63,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
 
   def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
     val listofargs = List[Term](Term.Name("self"), lhs)
-    val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listofargs)
+    val condp = Term.Apply(Term.Select(Term.Name("ldfi/akka/Controller"), Term.Name("greenLight")), listofargs)
     val elsep = Term.Block(List[Stat]())
     val thenp = Term.ApplyInfix(lhs, op, Nil, args)
 

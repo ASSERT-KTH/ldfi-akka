@@ -1,4 +1,5 @@
-package Controller
+package ldfi.akka.Controller
+
 import akka.actor._
 
 

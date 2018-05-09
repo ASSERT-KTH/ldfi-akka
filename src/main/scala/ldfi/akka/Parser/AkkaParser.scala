@@ -1,4 +1,4 @@
-package Parser
+package ldfi.akka.Parser
 
 import java.io.BufferedReader
 
@@ -6,7 +6,7 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 import scala.io.{BufferedSource, Source}
-import BooleanFormulas._
+import ldfi.akka.BooleanFormulas._
 
 object AkkaParser {
 

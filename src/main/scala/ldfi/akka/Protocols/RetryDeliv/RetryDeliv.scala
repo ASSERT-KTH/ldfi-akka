@@ -1,4 +1,4 @@
-package Protocols.SimpleDeliv
+package ldfi.akka.Protocols.RetryDeliv
 
 import java.util.concurrent.TimeUnit
 
@@ -54,7 +54,7 @@ class Node extends Actor {
       //Broadcast this payload to all neighboring actors
       case Some(neighbors: List[ActorRef]) =>
         for(neigh <- neighbors) {
-            neigh ! broadcast
+          neigh ! broadcast
         }
       //Actor has no neighbors. Do nothing.
       case None => //Do nothing
@@ -72,7 +72,7 @@ class Node extends Actor {
 
 }
 
-class SimpleDeliv {
+class RetryDeliv {
   //Creating actor system
   val system = ActorSystem("system")
 

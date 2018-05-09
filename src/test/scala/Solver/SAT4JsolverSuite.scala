@@ -2,7 +2,7 @@ package Solver
 
 import java.io.{BufferedWriter, FileWriter}
 
-import BooleanFormulas.SAT4Jsolver
+import ldfi.akka.BooleanFormulas.SAT4Jsolver
 import org.scalatest.FunSuite
 
 import scala.io.Source

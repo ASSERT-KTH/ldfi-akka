@@ -1,14 +1,16 @@
-package InteractiveProtocols.RetryDeliv
+package ldfi.akka.InteractiveProtocols.RetryDeliv
 
 import java.util.concurrent.TimeUnit
 
-import Controller.Controller
 import akka.actor._
 import akka.event._
+
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.collection.{mutable, _}
 import akka.testkit.CallingThreadDispatcher
+import ldfi.akka.Controller.Controller
+
 import scala.concurrent.Await
 
 

@@ -1,5 +1,7 @@
 package Parser
-import BooleanFormulas.BooleanFormula._
+import ldfi.akka.BooleanFormulas.BooleanFormula._
+import ldfi.akka.Parser.DimacsParser
+
 import scala.io.Source
 import org.scalatest.FunSuite
 

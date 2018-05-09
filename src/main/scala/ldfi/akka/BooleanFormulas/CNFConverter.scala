@@ -1,7 +1,7 @@
-package BooleanFormulas
+package ldfi.akka.BooleanFormulas
 
-import Parser.AkkaParser.{FormattedLogs, Row}
-import BooleanFormulas.BooleanFormula._
+import ldfi.akka.BooleanFormulas.BooleanFormula._
+import ldfi.akka.Parser.AkkaParser._
 
 
 object CNFConverter {
