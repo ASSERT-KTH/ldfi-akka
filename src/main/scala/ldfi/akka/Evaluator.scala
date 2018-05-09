@@ -25,7 +25,7 @@ object Evaluator {
   val solutionFile = "solution.txt"
 
   def evaluateProg(prog: String): Unit = {
-    val formula = new Formula
+    val formula = new BooleanFormula.Formula
     var realSol = new ListBuffer[(String, String, String)]()
     forwardStep(("", "", ""))
 

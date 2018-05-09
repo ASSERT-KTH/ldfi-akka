@@ -1,7 +1,7 @@
 package BooleanFormulas
 
 import java.io._
-
+import BooleanFormulas.BooleanFormula._
 import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
@@ -27,13 +27,8 @@ case class FailureSpec(eot: Int,
 object Test extends App {
   val formula = new Formula
   val clause = new Clause
-  val msg1 = Message("A", "B", "1")
-  val msg2 = Message("A", "C", "1")
-  val n1 = Node("A", "1")
-  val n2 = Node("B", "1")
-  val n3 = Node("C", "1")
-  val msgs = Set(msg1, msg2)
-  val nodes = Set(n1, n2, n3)
+  val msgs = Set(Message("A", "B", "1"),  Message("A", "C", "1"))
+  val nodes = Set(Node("A", "1"), Node("B", "1"), Node("C", "1"))
   msgs.foreach(msg => clause.addLiteralToClause(msg))
   nodes.foreach(n => clause.addLiteralToClause(n))
   formula.addClause(clause)
@@ -78,13 +73,21 @@ object LightSAT4JSolver {
     val models = ArrayBuffer[Array[Literal]]()
     while(modelIterator.isSatisfiable(convertLitsToVecInt(nonCrashedMessages))){
       val currentModel = modelIterator.model().filter(_ > 0).map(s => formula.getLiteral(s))
-      
+
       if(!currentModel.filter(m => !nonCrashedNodes.contains(m)).isEmpty){
          models += currentModel
       }
     }
 
-    println(models)
+    for (model <- models){
+      print("\nFault injection: ")
+      for (lit <- model){
+        lit match {
+          case n:Node => print(n + " ")
+          case m:Message => print(m + " ")
+        }
+      }
+    }
 
 
   }

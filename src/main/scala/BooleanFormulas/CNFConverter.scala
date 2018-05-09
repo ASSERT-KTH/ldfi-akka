@@ -1,6 +1,7 @@
 package BooleanFormulas
 
 import Parser.AkkaParser.{FormattedLogs, Row}
+import BooleanFormulas.BooleanFormula._
 
 
 object CNFConverter {

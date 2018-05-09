@@ -2,7 +2,7 @@ package Parser
 
 import java.io.{BufferedWriter, File, FileWriter}
 
-import BooleanFormulas.{Formula, Literal}
+import BooleanFormulas.BooleanFormula._
 
 import scala.collection.mutable.HashMap
 
@@ -27,8 +27,9 @@ object DimacsParser {
       }
       body = body + "0" + "\n"
     }
+
     //write header
-    bw.write("p cnf " + formula.literalsToId.size.toString() + " " + totalclauses.toString() + "\n")
+    bw.write("p cnf " + formula.getAllLiterals.size.toString() + " " + totalclauses.toString() + "\n")
 
     //remove last newline
     body = body.substring(0, body.length() - 1)

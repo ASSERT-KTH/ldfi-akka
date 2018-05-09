@@ -2,6 +2,8 @@ package BooleanFormulas
 
 import java.io._
 
+
+import BooleanFormulas.BooleanFormula._
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.reader.DimacsReader
 import org.sat4j.reader.ParseFormatException

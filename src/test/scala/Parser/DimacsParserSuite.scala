@@ -1,5 +1,5 @@
 package Parser
-import BooleanFormulas._
+import BooleanFormulas.BooleanFormula._
 import scala.io.Source
 import org.scalatest.FunSuite
 
