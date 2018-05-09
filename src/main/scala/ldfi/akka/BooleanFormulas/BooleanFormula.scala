@@ -59,9 +59,9 @@ object BooleanFormula {
 
   sealed trait Literal extends Formula
 
-  case class Node(node: String, time: String) extends Literal
+  final case class Node(node: String, time: String) extends Literal
 
-  case class Message(sender: String, recipient: String, time: String) extends Literal
+  final case class Message(sender: String, recipient: String, time: String) extends Literal
 }
 
 
