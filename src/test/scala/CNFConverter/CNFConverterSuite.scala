@@ -26,7 +26,7 @@ class CNFConverterSuite extends FunSuite {
     val clause = new Clause
     val row = Row("A", "B", "1")
     val msg = Message("A", "B", "1")
-    CNFConverter.addRowToClause(formula, clause, row)
+    CNFConverter.addRowToClause(clause, row)
     test("testing addLiteralToClause"){
       assert(clause.literalExistsInFormula(msg))
     }
@@ -44,7 +44,7 @@ class CNFConverterSuite extends FunSuite {
 
   def testgetNode(): Unit = {
     val row = Row("A", "B", "1")
-    val msg = CNFConverter.getNode(row)
+    val msg = CNFConverter.getSenderNode(row)
     test("testing getNode") {
       assert(msg.node == row.sender)
       assert(msg.time == row.time)

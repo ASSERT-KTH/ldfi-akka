@@ -21,6 +21,7 @@ class Formula  {
       idToLiterals  += (literalId -> literal)
       //increment id
       literalId = literalId + 1
+      getLiteralId(literal)
     }
     println("ltoId size: " + literalsToId.size + " idToLit size: " + idToLiterals.size)
   }

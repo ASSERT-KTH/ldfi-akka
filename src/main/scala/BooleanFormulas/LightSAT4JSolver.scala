@@ -11,18 +11,41 @@ import org.sat4j.specs.{ContradictionException, IProblem, IVecInt, TimeoutExcept
 import org.sat4j.tools.ModelIterator
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.io.Source
 
+/*
+case class FailureSpec(eot: Int,
+                       eff: Int,
+                       maxCrashes: Int,
+                       nodes: Set[Node],
+                       messages: Set[Message],
+                       crashes: Set[Node] = Set.empty,
+                       cuts: Set[Message] = Set.empty)
 
+*/
+object Test extends App {
+  val formula = new Formula
+  val clause = new Clause
+  val msg1 = Message("A", "B", "1")
+  val msg2 = Message("A", "C", "1")
+  val n1 = Node("A", "1")
+  val n2 = Node("B", "1")
+  val n3 = Node("C", "1")
+  val msgs = Set(msg1, msg2)
+  val nodes = Set(n1, n2, n3)
+  msgs.foreach(msg => clause.addLiteralToClause(msg))
+  nodes.foreach(n => clause.addLiteralToClause(n))
+  formula.addClause(clause)
 
+  val fSpec = FailureSpec(2, 2, 0, nodes, msgs, Set.empty, Set.empty)
+  LightSAT4JSolver.solve(formula, fSpec)
+
+}
 
 object LightSAT4JSolver {
   /*
   Heavily influenced by https://github.com/palvaro/molly
-  Main authors:
-  Josh Rosen
-  Peter Alvaro
   */
 
 
@@ -44,17 +67,29 @@ object LightSAT4JSolver {
       solver.addExactly(new VecInt(nodeId), 1)
     }
 
-    solver.addAtLeast(convertNodesToVecInt(nonCrashedNodes), allNodes.size - failureSpec.maxCrashes)
-    solver.addClause(convertNodesToVecInt(allMessages))
+    solver.addAtLeast(convertLitsToVecInt(nonCrashedNodes), allNodes.size - failureSpec.maxCrashes)
+
+
+    solver.addClause(convertLitsToVecInt(allMessages))
 
 
     val modelIterator = new ModelIterator(solver)
-    //while(modelIterator.isSatisfiable())
+    //get the hypothesis
+    val models = ArrayBuffer[Array[Literal]]()
+    while(modelIterator.isSatisfiable(convertLitsToVecInt(nonCrashedMessages))){
+      val currentModel = modelIterator.model().filter(_ > 0).map(s => formula.getLiteral(s))
+      
+      if(!currentModel.filter(m => !nonCrashedNodes.contains(m)).isEmpty){
+         models += currentModel
+      }
+    }
+
+    println(models)
 
 
   }
 
-  def convertNodesToVecInt(literal: List[Literal]): VecInt = {
+  def convertLitsToVecInt(literal: List[Literal]): VecInt = {
     val idList = literal.map(lit => lit.getLiteralId(lit))
     new VecInt(idList.toArray)
   }

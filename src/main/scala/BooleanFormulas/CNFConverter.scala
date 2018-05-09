@@ -8,7 +8,7 @@ object CNFConverter {
   def run(formattedLog: FormattedLogs, formula: Formula): Unit = {
     val clause = new Clause
     for (line <- formattedLog.rows){
-      addRowToClause(formula, clause, line)
+      addRowToClause(clause, line)
     }
     //prettyPrintClause(clause)
 
@@ -16,17 +16,29 @@ object CNFConverter {
 
   }
 
-  def addRowToClause(formula: Formula, clause: Clause, line: Row): Unit = {
-    val nodeLiteral  = getNode(line)
+  def addRowToClause(clause: Clause, line: Row): Unit = {
     val messageLiteral = getMessage(line)
-    //clause.addLiteralToClause(nodeLiteral)
+    /*
+    val senderNodeLiteral  = getSenderNode(line)
+    val recipientNodeLiteral = getRecipientNode(line)
+    if(!clause.literalExistsInClause(senderNodeLiteral))
+      clause.addLiteralToClause(senderNodeLiteral)
+    if(!clause.literalExistsInClause(recipientNodeLiteral))
+      clause.addLiteralToClause(recipientNodeLiteral)
+    */
+
+    //all messages are unique
     clause.addLiteralToClause(messageLiteral)
 
   }
 
-  def getNode(line: Row): Node = {
+  def getSenderNode(line: Row): Node = {
     Node(line.sender, line.time)
   }
+  def getRecipientNode(line: Row): Node = {
+    Node(line.recipient, line.time)
+  }
+
 
   def getMessage(line: Row): Message = {
     Message(line.sender, line.recipient, line.time)
