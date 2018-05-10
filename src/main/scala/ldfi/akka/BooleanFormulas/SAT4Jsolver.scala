@@ -173,7 +173,7 @@ object SAT4Jsolver {
         if (!s.contains('-') && !s.contains("0")) {
           formula.getLiteral(s.toInt) match {
             case Node(node, time) => prettySol += "P(" + node + ", " + time + "), "; //res + (node, time)
-            case Message(sender, recipient, time) => prettySol += "M(" + sender + ", " + recipient + ", " + time + "), "; res = (sender, recipient, time) :: res
+            case Message(sender, recipient, time) => prettySol += "M(" + sender + ", " + recipient + ", " + time + "), "; res = (sender, recipient, time.toString) :: res
             case _ => sys.error("ERROR IN PRETTYPRINTSOLUTION. LITERAL IS NOT MESSAGE OR NODE.")
           }
         }

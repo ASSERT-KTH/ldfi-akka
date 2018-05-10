@@ -55,7 +55,7 @@ object AkkaParser {
   object Clock {
     var time = 0
     def tick(): Unit = time = time + 1
-    def getTime: String = time.toString
+    def getTime: Int = time
     def reset(): Unit = time = 0
   }
 
@@ -83,7 +83,7 @@ object AkkaParser {
 
 
   case class FormattedLogs(rows: List[Row])
-  case class Row(sender: String, recipient: String, time: String)
+  case class Row(sender: String, recipient: String, time: Int)
   case class Actor(name: String, id: Int)
 
 }

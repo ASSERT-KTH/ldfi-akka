@@ -27,8 +27,8 @@ case class FailureSpec(eot: Int,
 object Test extends App {
   val formula = new Formula
   val clause = new Clause
-  val msgs = Set(Message("A", "B", "1"),  Message("A", "C", "1"))
-  val nodes = Set(Node("A", "1"), Node("B", "1"), Node("C", "1"))
+  val msgs = Set(Message("A", "B", 1),  Message("A", "C", 1))
+  val nodes = Set(Node("A", 1), Node("B", 1), Node("C", 1))
   msgs.foreach(msg => clause.addLiteralToClause(msg))
   nodes.foreach(n => clause.addLiteralToClause(n))
   formula.addClause(clause)
@@ -38,13 +38,27 @@ object Test extends App {
 
 }
 
+
+
+
+//Acknowledgments: heavily influenced by https://github.com/palvaro/molly
 object LightSAT4JSolver {
-  /*
-  Heavily influenced by https://github.com/palvaro/molly
-  */
+
 
 
   def solve(formula: Formula, failureSpec: FailureSpec): Unit = {
+
+    object FreshVar {
+      var cnt = 0
+
+      def getFreshVar : Int = {
+        cnt = cnt + 1
+        formula.getLitIdCnt + cnt
+      }
+
+    }
+
+
     val solver = SolverFactory.newLight()
     solver.setTimeout(60)
     val allNodes = formula.getAllNodes
@@ -56,46 +70,85 @@ object LightSAT4JSolver {
     val cutMessages = failureSpec.messages
     val nonCrashedMessages = allMessages.filter(msg => !cutMessages.contains(msg))
 
-    for(node <- crashedNodes){
+
+    //Add clauses from cnf to solver
+    for(c <- formula.clauses){
+      val messagesLosses = c.literals collect { case m:Message => m }
+      val crashes = c.literals collect { case n:Node => n }
+      val vecInts = convertLitsToVecInt(messagesLosses ++ crashes)
+
+      solver.addClause(vecInts)
+    }
+
+    //Set all the crashed nodes as sole clauses with must satisfy constraint
+    for (node <- crashedNodes){
       val nodeId = node.getLiteralId(node)
       //This node is already crashed, so it is set to true in the formula
       solver.addExactly(new VecInt(nodeId), 1)
     }
 
-    solver.addAtLeast(convertLitsToVecInt(nonCrashedNodes), allNodes.size - failureSpec.maxCrashes)
+    //Set new nodes to crash
+    for(node <- allNodes){
+      val activityRange = formula.getActivityTimeRange(node.node)
+      val crashVars = activityRange match {
+        case Some((firstTime, lastTime)) =>
+          (firstTime to lastTime).filter(x => formula.literalExistsInFormula(Node(node.node, x))).toArray
+        case None => sys.error("Node doesn't have any activity. ")
+      }
+      val dummy = FreshVar.getFreshVar
+
+      solver.addExactly(new VecInt(crashVars ++ Seq(dummy)), 1)
+    }
 
 
-    solver.addClause(convertLitsToVecInt(allMessages))
+    //If I have 0 maxcrashes, then no nodes can crash, otherwise atleast #nodes - maxcrashes don't crash
+    solver.addAtLeast(convertLitsToNegatedVecInt(allNodes), allNodes.size - failureSpec.maxCrashes)
 
+    val afterEFFmsgs = allMessages.filter(_.time >= failureSpec.eff)
 
     val modelIterator = new ModelIterator(solver)
     //get the hypothesis
-    val models = ArrayBuffer[Array[Literal]]()
-    while(modelIterator.isSatisfiable(convertLitsToVecInt(nonCrashedMessages))){
-      val currentModel = modelIterator.model().filter(_ > 0).map(s => formula.getLiteral(s))
+    val models = ArrayBuffer[Array[Int]]()
 
+    while(modelIterator.isSatisfiable(convertLitsToVecInt(afterEFFmsgs))){
+
+      //val currentModel = modelIterator.model().filter(_ > 0).map(s => formula.getLiteral(s))
+      val currentModel = modelIterator.model().filter(_ > 0).map {
+        s =>
+        val lit = formula.getLiteral(s)
+        if(afterEFFmsgs.contains(lit)) -1 * s
+        else s
+      }
+      models += currentModel
+      /*
       if(!currentModel.filter(m => !nonCrashedNodes.contains(m)).isEmpty){
          models += currentModel
       }
+      */
     }
-
     for (model <- models){
       print("\nFault injection: ")
       for (lit <- model){
-        lit match {
+        formula.getLiteral(lit) match {
           case n:Node => print(n + " ")
           case m:Message => print(m + " ")
         }
       }
     }
-
-
+    
   }
+
 
   def convertLitsToVecInt(literal: List[Literal]): VecInt = {
     val idList = literal.map(lit => lit.getLiteralId(lit))
     new VecInt(idList.toArray)
   }
+
+  def convertLitsToNegatedVecInt(literal: List[Literal]): VecInt = {
+    val idList = literal.map(lit => lit.getLiteralId(lit) * -1)
+    new VecInt(idList.toArray)
+  }
+
 
 
 

@@ -12,8 +12,8 @@ class DimacsParserSuite extends FunSuite {
   def testDimacsParser(): Unit = {
     val formula = new Formula
     val clause = new Clause
-    val l1 = Message("A", "B", "1")
-    val l2 = Message("A", "C", "1")
+    val l1 = Message("A", "B", 1)
+    val l2 = Message("A", "C", 1)
 
     clause.addLiteralToClause(l1)
     clause.addLiteralToClause(l2)

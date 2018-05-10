@@ -16,7 +16,7 @@ class AkkaParserSuite extends FunSuite {
     val input: BufferedSource = Source.fromFile("src/test/scala/Parser/testLogs.log")
     val res: FormattedLogs = AkkaParser.run(input)
     test("Testing AkkaParser") {
-      assert(res == FormattedLogs(List(Row("A", "B", "1"), Row("A", "C", "1"))))
+      assert(res == FormattedLogs(List(Row("A", "B", 1), Row("A", "C", 1))))
     }
   }
 
