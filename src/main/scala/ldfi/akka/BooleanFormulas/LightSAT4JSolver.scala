@@ -30,7 +30,7 @@ object Test extends App {
   nodes.foreach(n => clause.addLiteralToClause(n))
   formula.addClause(clause)
 
-  val fSpec = FailureSpec(2, 2, 1, nodes, msgs, Set.empty, Set.empty)
+  val fSpec = FailureSpec(2, 2, 0, nodes, msgs, Set.empty, Set.empty)
   LightSAT4JSolver.solve(formula, fSpec)
 
 }
@@ -41,9 +41,9 @@ object Test extends App {
 //Acknowledgments: heavily influenced by https://github.com/palvaro/molly
 object LightSAT4JSolver {
 
+  def solve(formula: Formula, failureSpec: FailureSpec): List[Set[Literal]] = {
 
-
-  def solve(formula: Formula, failureSpec: FailureSpec): Unit = {
+    //Object to create dummy variables for the sat-solver
     object Dummy {
       var dummyIdToNode : Map[Int, Node] = Map.empty
       var dummyNodeToId : Map[Node, Int] = Map.empty
@@ -56,12 +56,9 @@ object LightSAT4JSolver {
         dummyNodeToId += (node -> dummy)
         dummy
       }
-
-
     }
 
     import Dummy._
-
 
     val solver = SolverFactory.newLight()
     solver.setTimeout(60)
@@ -80,10 +77,9 @@ object LightSAT4JSolver {
       val messagesLosses = c.literals collect { case m:Message => m }
       val crashes = c.literals collect { case n:Node => n }
       val vecInts = convertLitsToVecInt(messagesLosses ++ crashes)
-
       solver.addClause(vecInts)
     }
-
+    
     //Set all the crashed nodes as sole clauses with must satisfy constraint
     for (node <- crashedNodes){
       val nodeId = node.getLiteralId(node)
@@ -99,24 +95,20 @@ object LightSAT4JSolver {
         case None => sys.error("Node doesn't have any activity. ")
       }
       val dummy = Dummy.getFreshVar(node)
-
-
       solver.addExactly(new VecInt(crashVars ++ Seq(dummy * -1)), 1)
     }
-
 
     //If I have 0 maxcrashes, then no nodes can crash, otherwise atleast #nodes - maxcrashes don't crash
     solver.addAtLeast(convertLitsToNegatedVecInt(allNodes), allNodes.size - failureSpec.maxCrashes)
 
+    //afterEFFmsgs or already cut messages are assumed
     val afterEFFmsgs = allMessages.filter(_.time >= failureSpec.eff)
+    val assumptions = convertLitsToNegatedVecInt(afterEFFmsgs ++ failureSpec.cuts)
 
     val modelIterator = new ModelIterator(solver)
-    //get the hypothesis
     val models = ArrayBuffer[Set[Literal]]()
 
-    while(modelIterator.isSatisfiable(convertLitsToVecInt(afterEFFmsgs))){
-
-      //val currentModel = modelIterator.model().filter(_ > 0).map(s => formula.getLiteral(s))
+    while(modelIterator.isSatisfiable(assumptions)){
       val currentModel = modelIterator.model().filter(i => i > 0 && !dummyIdToNode.contains(i)).map(formula.getLiteral).toSet
       models += currentModel
       /*
@@ -126,25 +118,11 @@ object LightSAT4JSolver {
       */
     }
 
-    val subModels = removeSuperSets(models, models)
-
-
-
-
-
-
-    for (model <- subModels){
-      print("\nFault injection: ")
-      for (lit <- model){
-        lit match {
-          case n:Node => print(n + " ")
-          case m:Message => print(m + " ")
-        }
-      }
-    }
+    val minimalModels = removeSuperSets(models, models)
+    printModels(minimalModels)
+    minimalModels
 
   }
-
 
   def convertLitsToVecInt(literal: List[Literal]): VecInt = {
     val idList = literal.map(lit => lit.getLiteralId(lit))
@@ -158,13 +136,25 @@ object LightSAT4JSolver {
 
 
   def removeSuperSets(models : ArrayBuffer[Set[Literal]], entire : ArrayBuffer[Set[Literal]]): List[Set[Literal]] = models.size match {
+    case 0 => List.empty
     case 1 =>
       val model = models.head
       val isSuperSet = entire.filter(_ != model).exists { m => m.subsetOf(model) }
       if(isSuperSet) List(Set.empty)
       else List(model)
-    case _ =>
-      (removeSuperSets(ArrayBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).filter(_.nonEmpty)
+    case _ => (removeSuperSets(ArrayBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).filter(_.nonEmpty)
+  }
+
+  def printModels(models : List[Set[Literal]]): Unit =  {
+    for (model <- models) {
+      print("\nFault injection: ")
+      for (lit <- model) {
+        lit match {
+          case n: Node => print (n + " ")
+          case m: Message => print (m + " ")
+        }
+      }
+    }
   }
 
 
