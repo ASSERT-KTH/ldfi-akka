@@ -21,22 +21,9 @@ case class FailureSpec(eot: Int,
                        cuts: Set[Message] = Set.empty)
 
 */
-object Test extends App {
-  val formula = new Formula
-  val clause = new Clause
-  val msgs = Set(Message("A", "B", 1),  Message("A", "C", 1))
-  val nodes = Set(Node("A", 1), Node("B", 1), Node("C", 1))
-  msgs.foreach(msg => clause.addLiteralToClause(msg))
-  nodes.foreach(n => clause.addLiteralToClause(n))
-  formula.addClause(clause)
 
-  val fSpec = FailureSpec(2, 2, 1, nodes, msgs, Set.empty, Set.empty)
-  LightSAT4JSolver.solve(formula, fSpec)
-
-}
-
-
-//Acknowledgments: heavily influenced by https://github.com/palvaro/molly
+//heavily influenced by
+//https://github.com/palvaro/molly/blob/master/src/main/scala/edu/berkeley/cs/boom/molly/derivations/SAT4JSolver.scala
 object LightSAT4JSolver {
 
   def solve(formula: Formula, failureSpec: FailureSpec): Set[Set[Literal]] = {
@@ -63,7 +50,7 @@ object LightSAT4JSolver {
       val crashVars = activityRange match {
         case Some((firstTime, lastTime)) =>
           (firstTime to lastTime).filter(x => formula.literalExistsInFormula(Node(node.node, x))).toArray
-        case None => sys.error("Node doesn't have any activity. ")
+        case None => sys.error("Solver: Node doesn't have any activity. " + node)
       }
       val dummy = solver.nextFreeVarId(true)
       solver.addExactly(new VecInt(crashVars ++ Seq(dummy * -1)), 1)
@@ -122,8 +109,6 @@ object LightSAT4JSolver {
       }
     }
   }
-
-
 
 
 }
