@@ -37,70 +37,70 @@ class LightSAT4JSolverSuite extends FunSuite {
     //fpsec1
     val failureSpec1 = FailureSpec(3, 2, 0, nodes, msgs, Set.empty, Set.empty)
     val expected1 = Set(Set(msg1), Set(msg2))
-    test("Testing LightSAT4jSolver with fspec: <2, 2, 0>") {
+    test("Testing LightSAT4jSolver with fspec: <3, 2, 0>") {
       assert(LightSAT4JSolver.solve(formula, failureSpec1) == expected1)
     }
 
     //fpsec2
     val failureSpec2 = FailureSpec(3, 2, 1, nodes, msgs, Set.empty, Set.empty)
     val expected2 = Set(Set(msg1), Set(msg2), Set(node1), Set(node2), Set(node3))
-    test("Testing LightSAT4jSolver with fspec: <2, 2, 1>") {
+    test("Testing LightSAT4jSolver with fspec: <3, 2, 1>") {
       assert(LightSAT4JSolver.solve(formula, failureSpec2) == expected2)
     }
 
     //fpsec3
     val failureSpec3 = FailureSpec(3, 1, 0, nodes, msgs, Set.empty, Set.empty)
     val expected3 = Set.empty
-    test("Testing LightSAT4jSolver with fspec: <2, 1, 0>") {
+    test("Testing LightSAT4jSolver with fspec: <3, 1, 0>") {
       assert(LightSAT4JSolver.solve(formula, failureSpec3) == expected3)
     }
 
     //fpsec4
     val failureSpec4 = FailureSpec(3, 1, 1, nodes, msgs, Set.empty, Set.empty)
     val expected4 = Set(Set(node1), Set(node2), Set(node3))
-    test("Testing LightSAT4jSolver with fspec: <2, 1, 1>") {
+    test("Testing LightSAT4jSolver with fspec: <3, 1, 1>") {
       assert(LightSAT4JSolver.solve(formula, failureSpec4) == expected4)
     }
 
     //fpsec5
     val failureSpec5 = FailureSpec(3, 0, 0, nodes, msgs, Set.empty, Set.empty)
     val expected5 = Set.empty
-    test("Testing LightSAT4jSolver with fspec: <2, 0, 0>") {
+    test("Testing LightSAT4jSolver with fspec: <3, 0, 0>") {
       assert(LightSAT4JSolver.solve(formula, failureSpec5) == expected5)
     }
 
     //fpsec6
     val failureSpec6 = FailureSpec(3, 0, 1, nodes, msgs, Set.empty, Set.empty)
     val expected6 = Set(Set(node1), Set(node2), Set(node3))
-    test("Testing LightSAT4jSolver with fspec: <2, 0, 1>") {
+    test("Testing LightSAT4jSolver with fspec: <3, 0, 1>") {
       assert(LightSAT4JSolver.solve(formula, failureSpec6) == expected6)
     }
 
     //fpsec7
-    val failureSpec7 = FailureSpec(3, 2, 0, nodes, msgs, Set(Node("A", 1)), Set.empty)
-    val expected7 = Set(Set(msg1), Set(msg2))
-    test("Testing LightSAT4jSolver with fspec: <2, 2, 0> with one node crashed already") {
+    val failureSpec7 = FailureSpec(3, 2, 1, nodes, msgs, Set(Node("A", 1)), Set.empty)
+    val expected7 = Set(Set(msg1), Set(msg2), Set(node2), Set(node3))
+    test("Testing LightSAT4jSolver with fspec: <3, 2, 1> with one node crashed already") {
       assert(LightSAT4JSolver.solve(formula, failureSpec7) == expected7)
     }
 
     //fpsec8
     val failureSpec8 = FailureSpec(3, 2, 1, nodes, msgs, Set(Node("A", 1)), Set.empty)
     val expected8 = Set(Set(msg1), Set(msg2), Set(node2), Set(node3))
-    test("Testing LightSAT4jSolver with fspec: <2, 2, 1> with one node crashed already") {
+    test("Testing LightSAT4jSolver with fspec: <3, 2, 1> with one node crashed already") {
       assert(LightSAT4JSolver.solve(formula, failureSpec8) == expected8)
     }
 
     //fpsec9
     val failureSpec9 = FailureSpec(3, 2, 1, nodes, msgs, Set(node1), Set(msg1))
     val expected9 = Set(Set(msg2), Set(node2), Set(node3))
-    test("Testing LightSAT4jSolver with fspec: <2, 2, 1> with one node crashed and one message cut") {
+    test("Testing LightSAT4jSolver with fspec: <3, 2, 1> with one node crashed and one message cut") {
       assert(LightSAT4JSolver.solve(formula, failureSpec9) == expected9)
     }
 
     //fpsec10
-    val failureSpec10 = FailureSpec(3, 2, 1, nodes, msgs, Set(node1, node2, node3), Set(msg1, msg2))
+    val failureSpec10 = FailureSpec(3, 2, 3, nodes, msgs, Set(node1, node2, node3), Set(msg1, msg2))
     val expected10 = Set.empty
-    test("Testing LightSAT4jSolver with fspec: <2, 2, 1> with all nodes crashed and all messages cut") {
+    test("Testing LightSAT4jSolver with fspec: <3, 2, 3> with all nodes crashed and all messages cut") {
       assert(LightSAT4JSolver.solve(formula, failureSpec10) == expected10)
     }
 

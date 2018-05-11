@@ -6,7 +6,6 @@ import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.tools.ModelIterator
-import Set.utils
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
