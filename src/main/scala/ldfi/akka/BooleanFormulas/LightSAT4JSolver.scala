@@ -30,12 +30,10 @@ object Test extends App {
   nodes.foreach(n => clause.addLiteralToClause(n))
   formula.addClause(clause)
 
-  val fSpec = FailureSpec(2, 2, 1, nodes, msgs, Set(Node("B", 1)), Set.empty)
+  val fSpec = FailureSpec(2, 2, 1, nodes, msgs, Set.empty, Set.empty)
   LightSAT4JSolver.solve(formula, fSpec)
 
 }
-
-
 
 
 //Acknowledgments: heavily influenced by https://github.com/palvaro/molly
@@ -43,30 +41,13 @@ object LightSAT4JSolver {
 
   def solve(formula: Formula, failureSpec: FailureSpec): List[Set[Literal]] = {
 
-    //Object to create dummy variables for the sat-solver
-    object Dummy {
-      var dummyIdToNode : Map[Int, Node] = Map.empty
-      var dummyNodeToId : Map[Node, Int] = Map.empty
-      var cnt = 0
-
-      def getFreshVar(node: Node) : Int = {
-        cnt = cnt + 1
-        val dummy = formula.getLitIdCnt + cnt
-        dummyIdToNode += (dummy -> node)
-        dummyNodeToId += (node -> dummy)
-        dummy
-      }
-    }
-
-    import Dummy._
-
     val solver = SolverFactory.newLight()
     solver.setTimeout(60)
     val allNodes = formula.getAllNodes
     val allMessages = formula.getAllMessages
 
     val crashedNodes = failureSpec.crashes
-    val cutMessages = failureSpec.messages
+    val cutMessages = failureSpec.cuts
 
     //Add clauses from cnf to solver
     for(c <- formula.clauses){
@@ -84,22 +65,22 @@ object LightSAT4JSolver {
           (firstTime to lastTime).filter(x => formula.literalExistsInFormula(Node(node.node, x))).toArray
         case None => sys.error("Node doesn't have any activity. ")
       }
-      val dummy = Dummy.getFreshVar(node)
+      val dummy = solver.nextFreeVarId(true)
       solver.addExactly(new VecInt(crashVars ++ Seq(dummy * -1)), 1)
     }
 
     //If I have 0 maxcrashes, then no nodes can crash, otherwise atleast #nodes - maxcrashes don't crash
     solver.addAtLeast(convertLitsToNegatedVecInt(allNodes), allNodes.size - failureSpec.maxCrashes)
 
-    //afterEFFmsgs, already cut messages and already crashed nodes are assumed
-    val afterEFFmsgs = allMessages.filter(_.time >= failureSpec.eff)
-    val assumptions = convertLitsToNegatedVecInt(afterEFFmsgs ++ cutMessages ++ crashedNodes)
+    //nonAllowedMessageCuts, already cut messages and already crashed nodes are assumed
+    val nonAllowedMessageCuts = allMessages.filter(_.time >= failureSpec.eff)
+    val assumptions = convertLitsToNegatedVecInt(nonAllowedMessageCuts ++ cutMessages ++ crashedNodes)
 
     val modelIterator = new ModelIterator(solver)
     val models = ArrayBuffer[Set[Literal]]()
 
     while(modelIterator.isSatisfiable(assumptions)){
-      val currentModel = modelIterator.model().filter(i => i > 0 && !dummyIdToNode.contains(i)).map(formula.getLiteral).toSet
+      val currentModel = modelIterator.model().filter(i => i > 0 && i <= formula.getAllLiterals.size).map(formula.getLiteral).toSet
       models += currentModel
     }
 
