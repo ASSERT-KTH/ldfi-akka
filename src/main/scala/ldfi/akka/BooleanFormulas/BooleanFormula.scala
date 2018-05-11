@@ -13,6 +13,7 @@ object BooleanFormula {
     var clauses : List[Clause] = List.empty
 
     def addLiteralToFormula(literal: Literal): Unit = {
+      //updateSenderTime(literal)
       updateActivityMap(literal)
 
       if (!literalExistsInFormula(literal)) {
@@ -32,6 +33,10 @@ object BooleanFormula {
 
     def literalExistsInFormula(literal: Literal): Boolean = literalsToId.contains(literal)
 
+    def idExistsInLiteralsToId(id: Int): Boolean = idToLiterals.contains(id)
+
+    def litExistsInIdToLiterals(literal: Literal): Boolean = literalsToId.contains(literal)
+
     def getActivityTimeRange(node: String): Option[(Int, Int)] = {
       activityTimeRange.get(node) match {
         case valu @ Some(value) => valu
@@ -49,7 +54,7 @@ object BooleanFormula {
     def getLiteral(literalId: Int): Literal = {
       idToLiterals.get(literalId) match {
         case Some(literal) => literal
-        case None => sys.error("ID DOES NOT EXIST IN HASHMAP idToLiterals")
+        case None => sys.error("Literalid: " + literalId + ", does not exist in hashmap idToLiterals")
       }
     }
 
@@ -57,6 +62,18 @@ object BooleanFormula {
       literalId
     }
 
+
+    def updateSenderTime(literal: Literal): Unit = {
+      literal match {
+        case n @ Node(id, time) => //DO NOTHING
+        case m @ Message(sender, recipient, time) =>
+          firstMessageSent.get(sender) match {
+            case Some(storedtime) if storedtime > time => firstMessageSent + (sender -> time)
+            case Some(storedtime) if storedtime <= time => // Do nothing
+            case None => firstMessageSent += (sender -> time)
+          }
+      }
+    }
 
 
     def updateActivityMap(literal: Literal): Unit = {
@@ -70,9 +87,12 @@ object BooleanFormula {
       def updateActivityMapHelper(node: String, currTime: Int): Unit = {
         activityTimeRange.get(node) match {
           case Some((firstTime, lastTime)) =>
-            if(currTime < firstTime) firstMessageSent + (node -> (currTime, lastTime))
-            if(currTime > lastTime) firstMessageSent + (node -> (firstTime, lastTime))
-          case None => firstMessageSent + (node -> (currTime, currTime))
+            if(currTime < firstTime)
+              activityTimeRange + (node -> (currTime, lastTime))
+            if(currTime > lastTime)
+              activityTimeRange + (node -> (firstTime, lastTime))
+          case None =>
+            activityTimeRange += (node -> (currTime, currTime))
         }
       }
     }
@@ -88,19 +108,6 @@ object BooleanFormula {
     def addLiteralToClause(literal: Literal): Unit = {
       addLiteralToFormula(literal)
       literals = literal :: literals
-
-      /*
-      literal match {
-        case n @ Node(id, time) => //DO NOTHING
-        case m @ Message(sender, recipient, time) =>
-          firstMessageSent.get(sender) match {
-            case Some(storedtime) if storedtime > time => firstMessageSent + (sender -> time)
-            case Some(storedtime) if storedtime <= time => // Do nothing
-            case None => firstMessageSent + (sender -> time)
-          }
-      }
-      */
-
     }
 
     def literalExistsInClause(literal: Literal): Boolean = literals.contains(literal)

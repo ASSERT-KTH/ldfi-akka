@@ -5,9 +5,6 @@ import ldfi.akka.BooleanFormulas.BooleanFormula._
 import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
-import org.sat4j.reader.DimacsReader
-import org.sat4j.reader.ParseFormatException
-import org.sat4j.specs.{ContradictionException, IProblem, IVecInt, TimeoutException}
 import org.sat4j.tools.ModelIterator
 
 import scala.collection.mutable
@@ -33,7 +30,7 @@ object Test extends App {
   nodes.foreach(n => clause.addLiteralToClause(n))
   formula.addClause(clause)
 
-  val fSpec = FailureSpec(2, 2, 0, nodes, msgs, Set.empty, Set.empty)
+  val fSpec = FailureSpec(2, 2, 1, nodes, msgs, Set.empty, Set.empty)
   LightSAT4JSolver.solve(formula, fSpec)
 
 }
@@ -47,16 +44,23 @@ object LightSAT4JSolver {
 
 
   def solve(formula: Formula, failureSpec: FailureSpec): Unit = {
-
-    object FreshVar {
+    object Dummy {
+      var dummyIdToNode : Map[Int, Node] = Map.empty
+      var dummyNodeToId : Map[Node, Int] = Map.empty
       var cnt = 0
 
-      def getFreshVar : Int = {
+      def getFreshVar(node: Node) : Int = {
         cnt = cnt + 1
-        formula.getLitIdCnt + cnt
+        val dummy = formula.getLitIdCnt + cnt
+        dummyIdToNode += (dummy -> node)
+        dummyNodeToId += (node -> dummy)
+        dummy
       }
 
+
     }
+
+    import Dummy._
 
 
     val solver = SolverFactory.newLight()
@@ -83,7 +87,6 @@ object LightSAT4JSolver {
     //Set all the crashed nodes as sole clauses with must satisfy constraint
     for (node <- crashedNodes){
       val nodeId = node.getLiteralId(node)
-      //This node is already crashed, so it is set to true in the formula
       solver.addExactly(new VecInt(nodeId), 1)
     }
 
@@ -95,9 +98,10 @@ object LightSAT4JSolver {
           (firstTime to lastTime).filter(x => formula.literalExistsInFormula(Node(node.node, x))).toArray
         case None => sys.error("Node doesn't have any activity. ")
       }
-      val dummy = FreshVar.getFreshVar
+      val dummy = Dummy.getFreshVar(node)
 
-      solver.addExactly(new VecInt(crashVars ++ Seq(dummy)), 1)
+
+      solver.addExactly(new VecInt(crashVars ++ Seq(dummy * -1)), 1)
     }
 
 
@@ -108,17 +112,12 @@ object LightSAT4JSolver {
 
     val modelIterator = new ModelIterator(solver)
     //get the hypothesis
-    val models = ArrayBuffer[Array[Int]]()
+    val models = ArrayBuffer[Set[Literal]]()
 
     while(modelIterator.isSatisfiable(convertLitsToVecInt(afterEFFmsgs))){
 
       //val currentModel = modelIterator.model().filter(_ > 0).map(s => formula.getLiteral(s))
-      val currentModel = modelIterator.model().filter(_ > 0).map {
-        s =>
-        val lit = formula.getLiteral(s)
-        if(afterEFFmsgs.contains(lit)) -1 * s
-        else s
-      }
+      val currentModel = modelIterator.model().filter(i => i > 0 && !dummyIdToNode.contains(i)).map(formula.getLiteral).toSet
       models += currentModel
       /*
       if(!currentModel.filter(m => !nonCrashedNodes.contains(m)).isEmpty){
@@ -126,16 +125,24 @@ object LightSAT4JSolver {
       }
       */
     }
-    for (model <- models){
+
+    val subModels = removeSuperSets(models, models)
+
+
+
+
+
+
+    for (model <- subModels){
       print("\nFault injection: ")
       for (lit <- model){
-        formula.getLiteral(lit) match {
+        lit match {
           case n:Node => print(n + " ")
           case m:Message => print(m + " ")
         }
       }
     }
-    
+
   }
 
 
@@ -149,6 +156,16 @@ object LightSAT4JSolver {
     new VecInt(idList.toArray)
   }
 
+
+  def removeSuperSets(models : ArrayBuffer[Set[Literal]], entire : ArrayBuffer[Set[Literal]]): List[Set[Literal]] = models.size match {
+    case 1 =>
+      val model = models.head
+      val isSuperSet = entire.filter(_ != model).exists { m => m.subsetOf(model) }
+      if(isSuperSet) List(Set.empty)
+      else List(model)
+    case _ =>
+      (removeSuperSets(ArrayBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).filter(_.nonEmpty)
+  }
 
 
 
