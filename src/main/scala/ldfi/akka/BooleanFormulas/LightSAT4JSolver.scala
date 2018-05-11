@@ -8,7 +8,7 @@ import org.sat4j.minisat.SolverFactory
 import org.sat4j.tools.ModelIterator
 
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 /*
@@ -39,7 +39,7 @@ object Test extends App {
 //Acknowledgments: heavily influenced by https://github.com/palvaro/molly
 object LightSAT4JSolver {
 
-  def solve(formula: Formula, failureSpec: FailureSpec): List[Set[Literal]] = {
+  def solve(formula: Formula, failureSpec: FailureSpec): Set[Set[Literal]] = {
 
     val solver = SolverFactory.newLight()
     solver.setTimeout(60)
@@ -77,7 +77,7 @@ object LightSAT4JSolver {
     val assumptions = convertLitsToNegatedVecInt(nonAllowedMessageCuts ++ cutMessages ++ crashedNodes)
 
     val modelIterator = new ModelIterator(solver)
-    val models = ArrayBuffer[Set[Literal]]()
+    val models = ListBuffer[Set[Literal]]()
 
     while(modelIterator.isSatisfiable(assumptions)){
       val currentModel = modelIterator.model().filter(i => i > 0 && i <= formula.getAllLiterals.size).map(formula.getLiteral).toSet
@@ -101,17 +101,17 @@ object LightSAT4JSolver {
   }
 
 
-  def removeSuperSets(models : ArrayBuffer[Set[Literal]], entire : ArrayBuffer[Set[Literal]]): List[Set[Literal]] = models.size match {
-    case 0 => List.empty
+  def removeSuperSets(models : ListBuffer[Set[Literal]], entire : ListBuffer[Set[Literal]]): Set[Set[Literal]] = models.size match {
+    case 0 => Set.empty
     case 1 =>
       val model = models.head
       val isSuperSet = entire.filter(_ != model).exists { m => m.subsetOf(model) }
-      if(isSuperSet) List(Set.empty)
-      else List(model)
-    case _ => (removeSuperSets(ArrayBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).filter(_.nonEmpty)
+      if(isSuperSet) Set(Set.empty)
+      else Set(model)
+    case _ => (removeSuperSets(ListBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).filter(_.nonEmpty)
   }
 
-  def printModels(models : List[Set[Literal]]): Unit =  {
+  def printModels(models : Set[Set[Literal]]): Unit =  {
     for (model <- models) {
       print("\nFault injection: ")
       for (lit <- model) {
