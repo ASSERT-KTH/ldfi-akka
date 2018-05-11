@@ -11,6 +11,7 @@ import ldfi.akka.BooleanFormulas._
 object AkkaParser {
 
 
+  //TODO: If message is cut when rec and sender is the same, the clock doesn't notice it.
   def run(input: BufferedSource): FormattedLogs = {
     Clock.reset()
     val filename = "logs.log"

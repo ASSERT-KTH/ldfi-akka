@@ -6,6 +6,7 @@ import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.tools.ModelIterator
+import Set.utils
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -22,7 +23,7 @@ case class FailureSpec(eot: Int,
 
 */
 
-//heavily influenced by
+//influenced by
 //https://github.com/palvaro/molly/blob/master/src/main/scala/edu/berkeley/cs/boom/molly/derivations/SAT4JSolver.scala
 object LightSAT4JSolver {
 
@@ -67,7 +68,8 @@ object LightSAT4JSolver {
     val models = ListBuffer[Set[Literal]]()
 
     while(modelIterator.isSatisfiable(assumptions)){
-      val currentModel = modelIterator.model().filter(i => i > 0 && i <= formula.getAllLiterals.size).map(formula.getLiteral).toSet
+      val currentModel = modelIterator.model().filter(i => i > 0 && i <= formula.getAllLiterals.size).
+        map(formula.getLiteral).toSet
       models += currentModel
     }
 
@@ -88,14 +90,16 @@ object LightSAT4JSolver {
   }
 
 
-  def removeSuperSets(models : ListBuffer[Set[Literal]], entire : ListBuffer[Set[Literal]]): Set[Set[Literal]] = models.size match {
+  def removeSuperSets(models : ListBuffer[Set[Literal]], entire : ListBuffer[Set[Literal]]): Set[Set[Literal]] =
+    models.size match {
     case 0 => Set.empty
     case 1 =>
       val model = models.head
       val isSuperSet = entire.filter(_ != model).exists { m => m.subsetOf(model) }
       if(isSuperSet) Set(Set.empty)
       else Set(model)
-    case _ => (removeSuperSets(ListBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).filter(_.nonEmpty)
+    case _ => (removeSuperSets(ListBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).
+      filter(_.nonEmpty)
   }
 
   def printModels(models : Set[Set[Literal]]): Unit =  {

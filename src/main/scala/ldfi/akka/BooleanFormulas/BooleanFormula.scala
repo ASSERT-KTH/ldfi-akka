@@ -8,12 +8,14 @@ object BooleanFormula {
   var firstMessageSent : Map[String, Int] = Map.empty
   var activityTimeRange : Map[String, (Int, Int)] = Map.empty
   var literalId = 1
+  var latestTime = 0
 
   class Formula  {
     var clauses : List[Clause] = List.empty
 
     def addLiteralToFormula(literal: Literal): Unit = {
-      //updateSenderTime(literal)
+      updateLatestTime(literal)
+      updateSenderTime(literal)
       updateActivityMap(literal)
 
       if (!literalExistsInFormula(literal)) {
@@ -37,6 +39,10 @@ object BooleanFormula {
 
     def litExistsInIdToLiterals(literal: Literal): Boolean = literalsToId.contains(literal)
 
+    def getLitIdCnt: Int = literalId
+
+    def getLatestTime: Int = latestTime
+
     def getActivityTimeRange(node: String): Option[(Int, Int)] = {
       activityTimeRange.get(node) match {
         case valu @ Some(value) => valu
@@ -58,10 +64,10 @@ object BooleanFormula {
       }
     }
 
-    def getLitIdCnt: Int = {
-      literalId
+    def updateLatestTime (literal: Literal): Unit = literal match {
+      case Node(_, time) => if(time > latestTime) latestTime = time
+      case Message(_, _, time) => if(time > latestTime) latestTime = time
     }
-
 
     def updateSenderTime(literal: Literal): Unit = {
       literal match {
@@ -74,7 +80,6 @@ object BooleanFormula {
           }
       }
     }
-
 
     def updateActivityMap(literal: Literal): Unit = {
       literal match {
@@ -96,8 +101,6 @@ object BooleanFormula {
         }
       }
     }
-
-
 
   }
 

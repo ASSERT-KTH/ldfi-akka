@@ -5,6 +5,7 @@ import java.io.PrintWriter
 import BooleanFormulas._
 import InteractiveProtocols.RetryDeliv.RetryDeliv
 import InteractiveProtocols.SimpleDeliv.SimpleDeliv
+import ldfi.akka.BooleanFormulas.BooleanFormula.{Formula, Literal, Message, Node}
 import ldfi.akka.Parser.{AkkaParser, DimacsParser}
 
 import scala.collection.mutable.ListBuffer
@@ -95,6 +96,138 @@ object Evaluator {
       SAT4Jsolver.getPrettySol(formula)
 
     }
+
+  }
+
+  /*
+
+  case class FailureSpec(eot: Int,
+                       eff: Int,
+                       maxCrashes: Int,
+                       nodes: Set[Node],
+                       messages: Set[Message],
+                       crashes: Set[Node] = Set.empty,
+                       cuts: Set[Message] = Set.empty)
+   */
+
+  def evaluate(prog: String): Unit = {
+    var initialRun = false
+    val formula = new Formula
+
+
+
+
+
+    def evaluator(): Unit = {
+
+      //Obtain a failure-free outcome of the program
+      //val dummyFailureSpec = FailureSpec(0, 0, 0, Set.empty, Set.empty, Set.empty, Set.empty)
+      val correctness = forwardStep(Set.empty)
+      if(!correctness){
+        sys.error("Forwardstep: program: " + prog + ", does not work even with no failure injections.")
+      }
+
+      //Initial failurespec from failure-free program
+      val initFailureSpec = FailureSpec(
+        eot = formula.getLatestTime + 1,
+        eff = 2,
+        maxCrashes = 0,
+        nodes = formula.getAllNodes.toSet,
+        messages = formula.getAllMessages.toSet,
+        crashes = Set.empty,
+        cuts = Set.empty)
+
+      val adjustedFailureSpec = sweep(initFailureSpec)
+
+
+    }
+
+    def forwardStep(hypothesis: Set[Literal]): Boolean = {
+      if(hypothesis.nonEmpty){
+        //set controller injections
+      }
+      //Create new program and run it
+      val program = prog match {
+        case "SimpleDeliv" =>
+          val simpledeliv = new SimpleDeliv
+          simpledeliv.run()
+          simpledeliv
+        case "RetryDeliv" =>
+          val retrydeliv = new RetryDeliv
+          retrydeliv.run()
+          retrydeliv
+      }
+
+      val correctness = program match {
+        case program:SimpleDeliv =>
+          program.verifyPostWithoutAssert()
+        case program:RetryDeliv =>
+          program.verifyPostWithoutAssert()
+      }
+
+      correctness
+    }
+/*
+    def hazardAnalysis(failureSpec: FailureSpec, hypothesis: Set[Literal]): Unit = {
+       if(forwardStep(hypothesis)){
+         val hypcuts = hypothesis.collect { case msg:Message => msg }
+         val hypcrashes = hypothesis collect { case n:Node => n}
+         val updatedFailureSpec =
+          failureSpec.copy(cuts = failureSpec.cuts ++ hypcuts, crashes = failureSpec.crashes ++ hypcrashes)
+         val newHypothesis = LightSAT4JSolver.solve(formula, updatedFailureSpec)
+         newHypothesis.foreach(hyp => hazardAnalysis(updatedFailureSpec, hyp))
+
+       }
+       else {
+
+       }
+
+    }
+*/
+    def backwardStep(failureSpec: FailureSpec): Unit = {
+      //Format the program and convert it to CNF
+      val format = AkkaParser.run(input)
+      CNFConverter.run(format, formula)
+
+    }
+
+
+    def sweep(failureSpec: FailureSpec): FailureSpec = {
+      //Get the hypothesis for the fspec
+      val hypothesis = LightSAT4JSolver.solve(formula, failureSpec)
+
+      //If the correctness is not violated then we increase eff
+      if(!hypothesis.forall(forwardStep)){
+        failureSpec
+      }
+      else {
+        //We can not naively fail the program
+        if(failureSpec.eot == failureSpec.eff - 1)
+          failureSpec
+        //increment eff
+        else {
+          sweep(failureSpec.copy(eff = failureSpec.eff + 1))
+        }
+      }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   }
 
