@@ -30,7 +30,7 @@ object Test extends App {
   nodes.foreach(n => clause.addLiteralToClause(n))
   formula.addClause(clause)
 
-  val fSpec = FailureSpec(2, 2, 0, nodes, msgs, Set.empty, Set.empty)
+  val fSpec = FailureSpec(2, 2, 1, nodes, msgs, Set(Node("B", 1)), Set.empty)
   LightSAT4JSolver.solve(formula, fSpec)
 
 }
@@ -66,11 +66,7 @@ object LightSAT4JSolver {
     val allMessages = formula.getAllMessages
 
     val crashedNodes = failureSpec.crashes
-    val nonCrashedNodes = allNodes.filter(n => !crashedNodes.contains(n))
-
     val cutMessages = failureSpec.messages
-    val nonCrashedMessages = allMessages.filter(msg => !cutMessages.contains(msg))
-
 
     //Add clauses from cnf to solver
     for(c <- formula.clauses){
@@ -78,12 +74,6 @@ object LightSAT4JSolver {
       val crashes = c.literals collect { case n:Node => n }
       val vecInts = convertLitsToVecInt(messagesLosses ++ crashes)
       solver.addClause(vecInts)
-    }
-    
-    //Set all the crashed nodes as sole clauses with must satisfy constraint
-    for (node <- crashedNodes){
-      val nodeId = node.getLiteralId(node)
-      solver.addExactly(new VecInt(nodeId), 1)
     }
 
     //Set new nodes to crash
@@ -101,9 +91,9 @@ object LightSAT4JSolver {
     //If I have 0 maxcrashes, then no nodes can crash, otherwise atleast #nodes - maxcrashes don't crash
     solver.addAtLeast(convertLitsToNegatedVecInt(allNodes), allNodes.size - failureSpec.maxCrashes)
 
-    //afterEFFmsgs or already cut messages are assumed
+    //afterEFFmsgs, already cut messages and already crashed nodes are assumed
     val afterEFFmsgs = allMessages.filter(_.time >= failureSpec.eff)
-    val assumptions = convertLitsToNegatedVecInt(afterEFFmsgs ++ failureSpec.cuts)
+    val assumptions = convertLitsToNegatedVecInt(afterEFFmsgs ++ cutMessages ++ crashedNodes)
 
     val modelIterator = new ModelIterator(solver)
     val models = ArrayBuffer[Set[Literal]]()
@@ -111,11 +101,6 @@ object LightSAT4JSolver {
     while(modelIterator.isSatisfiable(assumptions)){
       val currentModel = modelIterator.model().filter(i => i > 0 && !dummyIdToNode.contains(i)).map(formula.getLiteral).toSet
       models += currentModel
-      /*
-      if(!currentModel.filter(m => !nonCrashedNodes.contains(m)).isEmpty){
-         models += currentModel
-      }
-      */
     }
 
     val minimalModels = removeSuperSets(models, models)
