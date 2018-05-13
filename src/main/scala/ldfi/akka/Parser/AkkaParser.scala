@@ -61,7 +61,7 @@ object AkkaParser {
   def shouldTick(curSen: String, curRec: String, curTime: Int): Boolean = {
     val currentInjections = Controller.injections
     val currMsg = Message(curSen, curRec, curTime)
-    val injectionsAtCurTime = currentInjections.collect { case msg@Message(_, _, t) if t == curTime => msg }
+    val injectionsAtCurTime = currentInjections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
     val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
     val isInjected = injectionsAtCurTime.contains(currMsg)
 
@@ -69,8 +69,8 @@ object AkkaParser {
     //the logical clock
     val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
 
-    println("sameSender: " + sameSender + ", currentInjections: " + injectionsAtCurTime + ", currentTime:  "
-      + curTime + ", currMessage: " + currMsg + ", result: " + res)
+    //println("sameSender: " + sameSender + ", currentInjections: " + injectionsAtCurTime + ", currentTime:  "
+      //+ curTime + ", currMessage: " + currMsg + ", result: " + res)
     res
   }
 
@@ -87,9 +87,7 @@ object AkkaParser {
     pattern.findAllIn(line).matchData foreach { m => recipient = m.group(0); }
     recipient
   }
-
-
-
+  
   def getAllNodes(format: FormattedLogs): HashSet[String] = {
     var dict = HashSet[String]()
     for (row <- format.rows) {
@@ -104,38 +102,15 @@ object AkkaParser {
     for (l <- format.rows) {
       print("\"sender\": " + l.sender + ", \"recipient\": " + l.recipient + ", ")
       print("\"time\": " + l.time + "\n")
-      /*
-      print("\"time\": " + l.time.year + "-" + l.time.month + "-" + l.time.day + "::" +
-      l.time.hour + ":" + l.time.minute + ":" + l.time.second + ":" + l.time.millisecond + "\n")
-      */
     }
     println("----------------------")
   }
 
-
   case class FormattedLogs(rows: List[Row])
   case class Row(sender: String, recipient: String, time: Int)
-  //case class Actor(name: String, id: Int)
 
 }
 
-
-//DATE
-/*
-  case class Date(year: String, month: String, day: String, hour: String, minute: String, second: String, millisecond: String)
-  def parseDate(line: String): Date = {
-    val pattern = raw"(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2}).(\d{3})".r
-    var time = ""
-    pattern.findAllIn(line).matchData foreach {
-      m => time = m.group(0)
-    }
-    val date = time match {
-      case pattern(year, month, day, hour, minute, second, millisecond) => Date(year, month, day, hour, minute, second, millisecond)
-      case _ =>  Date("1", "1", "1", "1", "1", "1", "1") //no match
-    }
-    date
-  }
- */
 
 
 
