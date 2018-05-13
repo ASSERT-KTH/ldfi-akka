@@ -13,7 +13,7 @@ class AkkaParserSuite extends FunSuite {
   testparseSender()
   testparseRecipient()
   testAkkaParser()
-  //testmanageClock()
+  testmanageClock()
 
 
   def testAkkaParser(): Unit = {
@@ -28,21 +28,20 @@ class AkkaParserSuite extends FunSuite {
   def testmanageClock(): Unit = {
 
     AkkaParser.Clock.reset()
-    Controller.injections = Set(Message("B", "A", 1))
-    test("Assert that time ticks when not same injection sender") {
-      assert(AkkaParser.manageClock("A", "B", "", "", 0) == 2)
-    }
 
-    AkkaParser.Clock.reset()
     Controller.injections = Set(Message("A", "C", 1))
     test("Assert that time does not tick when same injection sender and not injected") {
-      assert(AkkaParser.manageClock("A", "B", "", "", 0) == 1)
+      assert(AkkaParser.bigManageClock("A", "B", "", "", 0) == 1)
     }
 
-    AkkaParser.Clock.reset()
+    Controller.injections = Set(Message("B", "A", 1))
+    test("Assert that time ticks when not same injection sender") {
+      assert(AkkaParser.bigManageClock("A", "B", "", "", 0) == 2)
+    }
+
     Controller.injections = Set(Message("A", "B", 1))
     test("Assert that time ticks when same injection sender and injected") {
-      assert(AkkaParser.manageClock("A", "B", "", "", 0) == 2)
+      assert(AkkaParser.bigManageClock("A", "B", "", "", 0) == 2)
 
     }
 

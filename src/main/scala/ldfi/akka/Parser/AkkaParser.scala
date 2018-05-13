@@ -22,7 +22,6 @@ object AkkaParser {
     def reset(): Unit = time = 0
   }
 
-  //TODO: If message is cut when rec and sender is the same, the clock doesn't notice it.
   def run(input: BufferedSource): FormattedLogs = {
     Clock.reset()
     val filename = "logs.log"
@@ -35,7 +34,7 @@ object AkkaParser {
     for (line <- filteredLines) {
       val currentSender = parseSender(line)
       val currentRecipient = parseRecipient(line)
-      val time = manageClock(currentSender, currentRecipient, previousSender, previousRecipient, Clock.getTime)
+      val time = bigManageClock(currentSender, currentRecipient, previousSender, previousRecipient, Clock.getTime)
       Clock.setTime(time)
       previousSender = currentSender
       previousRecipient = currentRecipient
@@ -47,32 +46,34 @@ object AkkaParser {
   }
 
 
-  def manageClock(curSen: String, curRec: String, prevSen: String,  prevRec: String, curTime: Int): Int = {
-    var resTime = curTime
-    if(curSen != prevSen){
-      resTime = resTime + 1
-      //Check for cuts
-      while(shouldTick(resTime)){
-        resTime = resTime + 1
-      }
-    }
-    def shouldTick(curTime: Int): Boolean =  {
-      val currentInjections = Controller.injections
-      val currMsg = Message(curSen, curRec, curTime)
-      val injectionsAtCurTime = currentInjections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
-      val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
+  def bigManageClock(curSen: String, curRec: String, prevSen: String, prevRec: String, curTime: Int): Int = {
+    println("curSen: " + curSen + ", prevSen: " + prevSen)
+    if(curSen != prevSen)
+      manageClockRec(curSen, curRec, prevSen, prevRec, curTime + 1)
+    else
+      curTime
+  }
+  def manageClockRec(curSen: String, curRec: String, prevSen: String, prevRec: String, curTime: Int): Int = {
+    if (shouldTick(curSen, curRec, prevSen, prevRec, curTime))
+      manageClockRec(curSen, curRec, prevSen, prevRec, curTime + 1)
+    else
+      curTime
+  }
 
-      val isInjected = injectionsAtCurTime.contains(currMsg)
-      //The parser will not realize that some messages have been cut. This has to be corrected for when managing
-      //the logical clock
-      val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
+  def shouldTick(curSen: String, curRec: String, prevSen: String, prevRec: String, curTime: Int): Boolean = {
+    val currentInjections = Controller.injections
+    val currMsg = Message(curSen, curRec, curTime)
+    val injectionsAtCurTime = currentInjections.collect { case msg@Message(_, _, t) if t == curTime => msg }
+    val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
+    val isInjected = injectionsAtCurTime.contains(currMsg)
 
-      println("sameSender: " + sameSender + ", currentInjections: " + injectionsAtCurTime + ", currentTime:  "
-        + curTime + ", currMessage: " + currMsg + ", result: " + res)
-      res
-    }
-    resTime
+    //The parser will not realize that some messages have been cut. This has to be corrected for when managing
+    //the logical clock
+    val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
 
+    println("sameSender: " + sameSender + ", currentInjections: " + injectionsAtCurTime + ", currentTime:  "
+      + curTime + ", currMessage: " + currMsg + ", result: " + res)
+    res
   }
 
   def parseSender(line: String): String = {
