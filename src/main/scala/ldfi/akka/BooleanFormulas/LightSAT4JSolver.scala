@@ -73,7 +73,7 @@ object LightSAT4JSolver {
     }
 
     val minimalModels = removeSuperSets(models, models)
-    printModels(minimalModels)
+    //printModels(minimalModels)
     minimalModels
 
   }

@@ -10,10 +10,11 @@ import scala.io.{BufferedSource, Source}
 
 class AkkaParserSuite extends FunSuite {
 
-  testAkkaParser()
   testparseSender()
   testparseRecipient()
-  testmanageClock()
+  testAkkaParser()
+  //testmanageClock()
+
 
   def testAkkaParser(): Unit = {
     val input: BufferedSource = Source.fromFile("src/test/scala/Parser/testLogs.log")
@@ -26,25 +27,24 @@ class AkkaParserSuite extends FunSuite {
 
   def testmanageClock(): Unit = {
 
-
-    AkkaParser.Clock.time = 0
+    AkkaParser.Clock.reset()
     Controller.injections = Set(Message("B", "A", 1))
-    test("Assert that time ticks when not same injection sender"){
-      assert(AkkaParser.manageClock("A", "B", "", "") == 2)
+    test("Assert that time ticks when not same injection sender") {
+      assert(AkkaParser.manageClock("A", "B", "", "", 0) == 2)
     }
 
-    AkkaParser.Clock.time = 0
+    AkkaParser.Clock.reset()
     Controller.injections = Set(Message("A", "C", 1))
-    test("Assert that time does not tick when same injection sender and not injected"){
-      assert(AkkaParser.manageClock("A", "B", "", "") == 1)
+    test("Assert that time does not tick when same injection sender and not injected") {
+      assert(AkkaParser.manageClock("A", "B", "", "", 0) == 1)
     }
 
-    AkkaParser.Clock.time = 0
+    AkkaParser.Clock.reset()
     Controller.injections = Set(Message("A", "B", 1))
-    test("Assert that time ticks when same injection sender and injected"){
-      assert(AkkaParser.manageClock("A", "B", "", "") == 2)
-    }
+    test("Assert that time ticks when same injection sender and injected") {
+      assert(AkkaParser.manageClock("A", "B", "", "", 0) == 2)
 
+    }
 
 
   }
@@ -53,7 +53,7 @@ class AkkaParserSuite extends FunSuite {
     val line = "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
 
     val sender: String = AkkaParser.parseSender(line)
-    test("testing parseSender"){
+    test("testing parseSender") {
       assert(sender == "A")
     }
 
@@ -66,8 +66,6 @@ class AkkaParserSuite extends FunSuite {
       assert(recipient == "C")
     }
   }
-
-
 
 
 }

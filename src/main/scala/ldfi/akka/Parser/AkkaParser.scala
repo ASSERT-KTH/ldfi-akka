@@ -13,6 +13,14 @@ import ldfi.akka.Controller.Controller
 
 object AkkaParser {
 
+  object Clock {
+    var time = 0
+    def tick(): Unit = time = time + 1
+    def tick(steps: Int): Unit = time = time + steps
+    def getTime: Int = time
+    def setTime(newTime: Int): Unit  = time = newTime
+    def reset(): Unit = time = 0
+  }
 
   //TODO: If message is cut when rec and sender is the same, the clock doesn't notice it.
   def run(input: BufferedSource): FormattedLogs = {
@@ -27,7 +35,8 @@ object AkkaParser {
     for (line <- filteredLines) {
       val currentSender = parseSender(line)
       val currentRecipient = parseRecipient(line)
-      val time = manageClock(currentSender, previousSender, currentRecipient, previousRecipient)
+      val time = manageClock(currentSender, currentRecipient, previousSender, previousRecipient, Clock.getTime)
+      Clock.setTime(time)
       previousSender = currentSender
       previousRecipient = currentRecipient
       formattedLogs += Row(currentSender, currentRecipient, time)
@@ -38,21 +47,17 @@ object AkkaParser {
   }
 
 
-  def manageClock(curSen: String, prevSen: String, curRec: String, prevRec: String): Int = {
-
+  def manageClock(curSen: String, curRec: String, prevSen: String,  prevRec: String, curTime: Int): Int = {
+    var resTime = curTime
     if(curSen != prevSen){
-      println("Before: " + Clock.getTime)
-      Clock.tick()
+      resTime = resTime + 1
       //Check for cuts
-      while(shouldTick()){
-        println("ShouldTick")
-        Clock.tick()
+      while(shouldTick(resTime)){
+        resTime = resTime + 1
       }
     }
-
-    def shouldTick(): Boolean =  {
+    def shouldTick(curTime: Int): Boolean =  {
       val currentInjections = Controller.injections
-      val curTime = Clock.getTime
       val currMsg = Message(curSen, curRec, curTime)
       val injectionsAtCurTime = currentInjections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
       val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
@@ -61,10 +66,12 @@ object AkkaParser {
       //The parser will not realize that some messages have been cut. This has to be corrected for when managing
       //the logical clock
       val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
-      println(sameSender + " " + injectionsAtCurTime + " " + res)
+
+      println("sameSender: " + sameSender + ", currentInjections: " + injectionsAtCurTime + ", currentTime:  "
+        + curTime + ", currMessage: " + currMsg + ", result: " + res)
       res
     }
-    Clock.getTime
+    resTime
 
   }
 
@@ -82,13 +89,7 @@ object AkkaParser {
     recipient
   }
 
-  object Clock {
-    var time = 0
-    def tick(): Unit = time = time + 1
-    def tick(steps: Int): Unit = time = time + steps
-    def getTime: Int = time
-    def reset(): Unit = time = 0
-  }
+
 
   def getAllNodes(format: FormattedLogs): HashSet[String] = {
     var dict = HashSet[String]()
@@ -136,6 +137,8 @@ object AkkaParser {
     date
   }
  */
+
+
 
 
 
