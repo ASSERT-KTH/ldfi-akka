@@ -3,6 +3,7 @@ package ldfi.akka.BooleanFormulas
 
 object BooleanFormula {
 
+  //helper fields for later SAT-solving
   var literalsToId : Map[Literal, Int] = Map.empty
   var idToLiterals : Map[Int, Literal] = Map.empty
   var firstMessageSent : Map[String, Int] = Map.empty

@@ -2,11 +2,14 @@ package ldfi.akka.Parser
 
 import java.io.BufferedReader
 
+import ldfi.akka.BooleanFormulas.BooleanFormula.Message
+
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Set
 import scala.io.{BufferedSource, Source}
 import ldfi.akka.BooleanFormulas._
+import ldfi.akka.Controller.Controller
 
 object AkkaParser {
 
@@ -24,19 +27,45 @@ object AkkaParser {
     for (line <- filteredLines) {
       val currentSender = parseSender(line)
       val currentRecipient = parseRecipient(line)
-      //Only increase the clock in case there is a different sender & recipient.
-      if (previousSender != currentSender && previousRecipient != currentRecipient) {
-        Clock.tick()
-      }
-      val time = Clock.getTime
+      val time = manageClock(currentSender, previousSender, currentRecipient, previousRecipient)
       previousSender = currentSender
       previousRecipient = currentRecipient
       formattedLogs += Row(currentSender, currentRecipient, time)
     }
     
     val format = FormattedLogs(formattedLogs.toList)
-
     format
+  }
+
+
+  def manageClock(curSen: String, prevSen: String, curRec: String, prevRec: String): Int = {
+
+    if(curSen != prevSen){
+      println("Before: " + Clock.getTime)
+      Clock.tick()
+      //Check for cuts
+      while(shouldTick()){
+        println("ShouldTick")
+        Clock.tick()
+      }
+    }
+
+    def shouldTick(): Boolean =  {
+      val currentInjections = Controller.injections
+      val curTime = Clock.getTime
+      val currMsg = Message(curSen, curRec, curTime)
+      val injectionsAtCurTime = currentInjections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
+      val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
+
+      val isInjected = injectionsAtCurTime.contains(currMsg)
+      //The parser will not realize that some messages have been cut. This has to be corrected for when managing
+      //the logical clock
+      val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
+      println(sameSender + " " + injectionsAtCurTime + " " + res)
+      res
+    }
+    Clock.getTime
+
   }
 
   def parseSender(line: String): String = {
@@ -56,6 +85,7 @@ object AkkaParser {
   object Clock {
     var time = 0
     def tick(): Unit = time = time + 1
+    def tick(steps: Int): Unit = time = time + steps
     def getTime: Int = time
     def reset(): Unit = time = 0
   }
@@ -85,7 +115,7 @@ object AkkaParser {
 
   case class FormattedLogs(rows: List[Row])
   case class Row(sender: String, recipient: String, time: Int)
-  case class Actor(name: String, id: Int)
+  //case class Actor(name: String, id: Int)
 
 }
 

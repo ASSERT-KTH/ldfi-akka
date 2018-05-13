@@ -1,6 +1,7 @@
 package ldfi.akka.Controller
 
 import akka.actor._
+import ldfi.akka.BooleanFormulas.BooleanFormula.Literal
 
 
 
@@ -11,6 +12,7 @@ object Controller {
   var previousSender: String = _
   var previousRecipient: String = _
   var solutions: List[(String, String, String)] = List.empty
+  var injections : Set[Literal] = Set.empty
 
   object Clock {
     var time = 0

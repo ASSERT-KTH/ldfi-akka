@@ -1,8 +1,10 @@
 package Parser
 
+import ldfi.akka.BooleanFormulas.BooleanFormula.{Clause, Formula, Message, Node}
 import ldfi.akka.Parser.AkkaParser
 import ldfi.akka.Parser.AkkaParser.{FormattedLogs, Row}
 import org.scalatest.FunSuite
+import ldfi.akka.Controller.Controller
 
 import scala.io.{BufferedSource, Source}
 
@@ -11,6 +13,7 @@ class AkkaParserSuite extends FunSuite {
   testAkkaParser()
   testparseSender()
   testparseRecipient()
+  testmanageClock()
 
   def testAkkaParser(): Unit = {
     val input: BufferedSource = Source.fromFile("src/test/scala/Parser/testLogs.log")
@@ -18,6 +21,32 @@ class AkkaParserSuite extends FunSuite {
     test("Testing AkkaParser") {
       assert(res == FormattedLogs(List(Row("A", "B", 1), Row("A", "C", 1))))
     }
+  }
+
+
+  def testmanageClock(): Unit = {
+
+
+    AkkaParser.Clock.time = 0
+    Controller.injections = Set(Message("B", "A", 1))
+    test("Assert that time ticks when not same injection sender"){
+      assert(AkkaParser.manageClock("A", "B", "", "") == 2)
+    }
+
+    AkkaParser.Clock.time = 0
+    Controller.injections = Set(Message("A", "C", 1))
+    test("Assert that time does not tick when same injection sender and not injected"){
+      assert(AkkaParser.manageClock("A", "B", "", "") == 1)
+    }
+
+    AkkaParser.Clock.time = 0
+    Controller.injections = Set(Message("A", "B", 1))
+    test("Assert that time ticks when same injection sender and injected"){
+      assert(AkkaParser.manageClock("A", "B", "", "") == 2)
+    }
+
+
+
   }
 
   def testparseSender(): Unit = {
