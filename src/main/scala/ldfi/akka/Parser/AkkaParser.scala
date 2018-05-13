@@ -18,7 +18,7 @@ object AkkaParser {
     def tick(): Unit = time = time + 1
     def tick(steps: Int): Unit = time = time + steps
     def getTime: Int = time
-    def setTime(newTime: Int): Unit  = time = newTime
+    def setTime(newTime: Int): Unit = time = newTime
     def reset(): Unit = time = 0
   }
 
@@ -26,41 +26,39 @@ object AkkaParser {
     Clock.reset()
     val filename = "logs.log"
     var formattedLogs = ListBuffer[Row]()
-    var previousSender, previousRecipient = ""
+    var previousSender =  ""
     val filteredLines = input.getLines.
       filter(x => x.contains("received") && !x.contains("deadLetters")).
       map(x => x.replaceAll("\\s", ""))
 
     for (line <- filteredLines) {
-      val currentSender = parseSender(line)
-      val currentRecipient = parseRecipient(line)
-      val time = bigManageClock(currentSender, currentRecipient, previousSender, previousRecipient, Clock.getTime)
+      val (currentSender, currentRecipient) = (parseSender(line), parseRecipient(line))
+      val time = manageClock(currentSender, currentRecipient, previousSender, Clock.getTime)
       Clock.setTime(time)
       previousSender = currentSender
-      previousRecipient = currentRecipient
       formattedLogs += Row(currentSender, currentRecipient, time)
     }
-    
+
     val format = FormattedLogs(formattedLogs.toList)
     format
   }
 
-
-  def bigManageClock(curSen: String, curRec: String, prevSen: String, prevRec: String, curTime: Int): Int = {
+  def manageClock(curSen: String, curRec: String, prevSen: String, curTime: Int): Int = {
     println("curSen: " + curSen + ", prevSen: " + prevSen)
     if(curSen != prevSen)
-      manageClockRec(curSen, curRec, prevSen, prevRec, curTime + 1)
-    else
-      curTime
-  }
-  def manageClockRec(curSen: String, curRec: String, prevSen: String, prevRec: String, curTime: Int): Int = {
-    if (shouldTick(curSen, curRec, prevSen, prevRec, curTime))
-      manageClockRec(curSen, curRec, prevSen, prevRec, curTime + 1)
+      manageClockHelper(curSen, curRec, curTime + 1)
     else
       curTime
   }
 
-  def shouldTick(curSen: String, curRec: String, prevSen: String, prevRec: String, curTime: Int): Boolean = {
+  def manageClockHelper(curSen: String, curRec: String, curTime: Int): Int = {
+    if (shouldTick(curSen, curRec, curTime))
+      manageClockHelper(curSen, curRec, curTime + 1)
+    else
+      curTime
+  }
+
+  def shouldTick(curSen: String, curRec: String, curTime: Int): Boolean = {
     val currentInjections = Controller.injections
     val currMsg = Message(curSen, curRec, curTime)
     val injectionsAtCurTime = currentInjections.collect { case msg@Message(_, _, t) if t == curTime => msg }

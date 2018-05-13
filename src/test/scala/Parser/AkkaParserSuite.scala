@@ -22,26 +22,25 @@ class AkkaParserSuite extends FunSuite {
     test("Testing AkkaParser") {
       assert(res == FormattedLogs(List(Row("A", "B", 1), Row("A", "C", 1))))
     }
+
   }
 
 
   def testmanageClock(): Unit = {
 
-    AkkaParser.Clock.reset()
-
     Controller.injections = Set(Message("A", "C", 1))
     test("Assert that time does not tick when same injection sender and not injected") {
-      assert(AkkaParser.bigManageClock("A", "B", "", "", 0) == 1)
+      assert(AkkaParser.manageClock("A", "B", "", 0) == 1)
     }
 
     Controller.injections = Set(Message("B", "A", 1))
     test("Assert that time ticks when not same injection sender") {
-      assert(AkkaParser.bigManageClock("A", "B", "", "", 0) == 2)
+      assert(AkkaParser.manageClock("A", "B", "", 0) == 2)
     }
 
     Controller.injections = Set(Message("A", "B", 1))
     test("Assert that time ticks when same injection sender and injected") {
-      assert(AkkaParser.bigManageClock("A", "B", "", "", 0) == 2)
+      assert(AkkaParser.manageClock("A", "B", "", 0) == 2)
 
     }
 
