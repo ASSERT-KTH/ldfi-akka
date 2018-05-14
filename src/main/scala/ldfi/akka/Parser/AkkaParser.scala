@@ -2,11 +2,10 @@ package ldfi.akka.Parser
 
 import java.io.BufferedReader
 
-import ldfi.akka.BooleanFormulas.BooleanFormula.Message
+import ldfi.akka.BooleanFormulas.BooleanFormula.{Literal, Message}
 
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.Set
 import scala.io.{BufferedSource, Source}
 import ldfi.akka.BooleanFormulas._
 import ldfi.akka.Controller.Controller
@@ -33,7 +32,8 @@ object AkkaParser {
 
     for (line <- filteredLines) {
       val (currentSender, currentRecipient) = (parseSender(line), parseRecipient(line))
-      val time = manageClock(currentSender, currentRecipient, previousSender, Clock.getTime)
+      val injections = Controller.injections
+      val time = manageClock(currentSender, currentRecipient, previousSender, Clock.getTime, injections)
       Clock.setTime(time)
       previousSender = currentSender
       formattedLogs += Row(currentSender, currentRecipient, time)
@@ -43,34 +43,29 @@ object AkkaParser {
     format
   }
 
-  def manageClock(curSen: String, curRec: String, prevSen: String, curTime: Int): Int = {
-    println("curSen: " + curSen + ", prevSen: " + prevSen)
+  def manageClock(curSen: String, curRec: String, prevSen: String, curTime: Int, injections: Set[Literal]): Int = {
     if(curSen != prevSen)
-      manageClockHelper(curSen, curRec, curTime + 1)
+      manageClockHelper(curSen, curRec, curTime + 1, injections)
     else
       curTime
   }
 
-  def manageClockHelper(curSen: String, curRec: String, curTime: Int): Int = {
-    if (shouldTick(curSen, curRec, curTime))
-      manageClockHelper(curSen, curRec, curTime + 1)
+  def manageClockHelper(curSen: String, curRec: String, curTime: Int, injections: Set[Literal]): Int = {
+    if (shouldTick(curSen, curRec, curTime, injections))
+      manageClockHelper(curSen, curRec, curTime + 1, injections)
     else
       curTime
   }
 
-  def shouldTick(curSen: String, curRec: String, curTime: Int): Boolean = {
-    val currentInjections = Controller.injections
+  def shouldTick(curSen: String, curRec: String, curTime: Int, injections: Set[Literal]) : Boolean = {
     val currMsg = Message(curSen, curRec, curTime)
-    val injectionsAtCurTime = currentInjections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
+    val injectionsAtCurTime = injections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
     val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
     val isInjected = injectionsAtCurTime.contains(currMsg)
 
     //The parser will not realize that some messages have been cut. This has to be corrected for when managing
     //the logical clock
     val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
-
-    //println("sameSender: " + sameSender + ", currentInjections: " + injectionsAtCurTime + ", currentTime:  "
-      //+ curTime + ", currMessage: " + currMsg + ", result: " + res)
     res
   }
 
