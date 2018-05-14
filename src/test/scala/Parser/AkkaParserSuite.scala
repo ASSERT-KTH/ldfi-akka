@@ -25,7 +25,6 @@ class AkkaParserSuite extends FunSuite {
     //B receives from A, C receives from A
     logs.lift(0) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set.empty)
         test("Testing AkkaParser, two messages sent with no injections") {
@@ -37,7 +36,6 @@ class AkkaParserSuite extends FunSuite {
     //B receives from A
     logs.lift(1) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "C", 1)))
         test("Testing AkkaParser, two messages sent with single injection at time 1") {
@@ -49,7 +47,6 @@ class AkkaParserSuite extends FunSuite {
     //B receives from A
     logs.lift(1) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)))
         test("Testing AkkaParser, one messages sent with injection at first step & \"ghost\" time at step 2") {
@@ -61,7 +58,6 @@ class AkkaParserSuite extends FunSuite {
     //C receives from A, C receives from A
     logs.lift(2) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)))
         test("Testing AkkaParser, two same messages sent with injection at first step & \"ghost\" time at step 2") {
@@ -73,7 +69,6 @@ class AkkaParserSuite extends FunSuite {
     //C receives from A, B receives from A
     logs.lift(3) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)))
         test("Testing AkkaParser, two diff messages sent with injection at first step & \"ghost\" time at step 2") {
@@ -85,7 +80,6 @@ class AkkaParserSuite extends FunSuite {
     //C receives from A, B receives from C
     logs.lift(4) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)))
         test("Testing AkkaParser, different senders sent with injection at first step & \"ghost\" time at step 2") {
@@ -97,7 +91,6 @@ class AkkaParserSuite extends FunSuite {
     //C receives from A, D receives from A,  B receives from C
     logs.lift(5) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)))
         test("Testing AkkaParser, different senders sent multiple messages " +
@@ -110,7 +103,6 @@ class AkkaParserSuite extends FunSuite {
     //C receives from A, D receives from A,  B receives from A
     logs.lift(6) match {
       case Some(input) =>
-        println(input)
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)))
         test("Testing AkkaParser, same sender sent multiple messages " +
@@ -127,25 +119,23 @@ class AkkaParserSuite extends FunSuite {
 
     val inj1 = Set(Message("A", "C", 1).asInstanceOf[Literal])
     test("Assert that time does not tick when same injection sender and not injected") {
-      assert(AkkaParser.manageClock("A", "B", "", 0, inj1) == 1)
+      assert(AkkaParser.manageClock("A", "B", "", "",  0, inj1) == 1)
     }
 
     val inj2 = Set(Message("B", "A", 1).asInstanceOf[Literal])
     test("Assert that time ticks when not same injection sender") {
-      assert(AkkaParser.manageClock("A", "B", "", 0, inj2) == 2)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, inj2) == 2)
     }
 
     val inj3 = Set(Message("A", "B", 1).asInstanceOf[Literal])
     test("Assert that time ticks when same injection sender and injected") {
-      assert(AkkaParser.manageClock("A", "B", "", 0, inj3) == 2)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, inj3) == 2)
     }
 
     val inj4 = Set(Message("A", "B", 1).asInstanceOf[Literal], Message("B", "A", 2).asInstanceOf[Literal])
     test("Assert that time ticks two steps when same injection and next senderinjector is different"){
-      assert(AkkaParser.manageClock("A", "B", "", 0, inj4) == 3)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, inj4) == 3)
     }
-
-
 
   }
 
