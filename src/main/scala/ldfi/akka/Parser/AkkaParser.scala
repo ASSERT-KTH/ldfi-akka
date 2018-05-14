@@ -6,7 +6,7 @@ import ldfi.akka.BooleanFormulas.BooleanFormula.{Literal, Message}
 
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
-import scala.io.{BufferedSource, Source}
+import scala.io.Source
 import ldfi.akka.BooleanFormulas._
 import ldfi.akka.Controller.Controller
 
@@ -21,9 +21,8 @@ object AkkaParser {
     def reset(): Unit = time = 0
   }
 
-  def run(input: BufferedSource): FormattedLogs = {
+  def parse(input: Source, injections: Set[Literal]): FormattedLogs = {
     Clock.reset()
-    val filename = "logs.log"
     var formattedLogs = ListBuffer[Row]()
     var previousSender =  ""
     val filteredLines = input.getLines.
@@ -32,7 +31,6 @@ object AkkaParser {
 
     for (line <- filteredLines) {
       val (currentSender, currentRecipient) = (parseSender(line), parseRecipient(line))
-      val injections = Controller.injections
       val time = manageClock(currentSender, currentRecipient, previousSender, Clock.getTime, injections)
       Clock.setTime(time)
       previousSender = currentSender

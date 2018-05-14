@@ -83,7 +83,7 @@ object Evaluator {
 
     def backwardStep(): List[(String, String, String)] = {
       //Parse program
-      val format = AkkaParser.run(input)
+      val format = AkkaParser.parse(input, Set.empty)
       CNFConverter.run(format, formula)
       CNFConverter.prettyPrintFormula(formula)
 
@@ -186,7 +186,7 @@ object Evaluator {
 */
     def backwardStep(failureSpec: FailureSpec): Unit = {
       //Format the program and convert it to CNF
-      val format = AkkaParser.run(input)
+      val format = AkkaParser.parse(input, Set.empty)
       CNFConverter.run(format, formula)
 
     }
