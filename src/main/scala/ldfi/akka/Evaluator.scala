@@ -12,15 +12,9 @@ import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 
-
-
-//TODO: 1. Extend so that crashes are allowed as well
-//TODO: 2. Allow for more than one injection at a time. I.e, cut at time 1 AND at time 4
-//TODO: 3. Extend to make sure it takes a Failure Specification into account
-//TODO: 4. Make sure that I don't add clauses that already exists in the formula.
 object Evaluator {
   //This can be changed
-  val input = Source.fromFile("logs.log")
+  val input : Source = Source.fromFile("logs.log")
   val dimacsFormulaFile = "dimacs.txt"
   val solutionFile = "solution.txt"
 
@@ -113,9 +107,6 @@ object Evaluator {
   def evaluate(prog: String): Unit = {
     var initialRun = false
     val formula = new Formula
-
-
-
 
 
     def evaluator(): Unit = {
