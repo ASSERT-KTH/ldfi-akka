@@ -9,14 +9,26 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     //ctx.debugIndex()
     //println(s"Tree.syntax: " + ctx.tree.syntax)
     //println(s"Tree.structure: " + ctx.tree.structure)
-    importController(ctx) + addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) + addControllerGreenLight(ctx)
+    importController(ctx) + importDispatcher(ctx) +
+      addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) +
+      addControllerGreenLight(ctx) + addDispatcherToProps(ctx)
   }
 
   def importController(ctx: RuleCtx): Patch = {
-    //import Controller
-    val importee = Importee.Name(Name.Indeterminate("ldfi/akka/Controller"))
-    val importer = Importer(Term.Name("ldfi/akka/Controller"), List(importee))
+    //import ldfi.akka.Controller.Controller
+
+    val importee = Importee.Name(Name.Indeterminate("Controller"))
+    val importer = Importer(Term.Name("ldfi.akka.Controller"), List(importee))
     ctx.addGlobalImport(importer)
+  }
+
+  def importDispatcher(ctx: RuleCtx): Patch = {
+    //import akka.testkit.CallingThreadDispatcher
+
+    val importee = Importee.Name(Name.Indeterminate("CallingThreadDispatcher"))
+    val importer = Importer(Term.Name("akka.testkit"), List(importee))
+    ctx.addGlobalImport(importer)
+
   }
 
   def addExtendsWithActorLogging(ctx: RuleCtx): Patch = {
@@ -59,11 +71,28 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     patch
   }
 
+  def addDispatcherToProps(ctx: RuleCtx): Patch = {
+    //_.actorOf(_, _) => _.actorOf(_.withDispatcher(CallingThreadDispatcher.Id), _)
+    ctx.tree.collect {
+      case apply @ Term.Apply(fun, args) =>
+        val initsActor = fun.collect { case term @ Term.Name(value) if value == "actorOf" => term }.nonEmpty
+        if(initsActor){
+          args.lift(args.length - 2) match {
+            case Some(props) => ctx.addRight(props, ".withDispatcher(CallingThreadDispatcher.Id)")
+            case _ => Patch.empty
+          }
+        }
+        else Patch.empty
+      case _ => Patch.empty
+    }.asPatch
+  }
+
+
   //Helper functions
 
   def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
     val listofargs = List[Term](Term.Name("self"), lhs)
-    val condp = Term.Apply(Term.Select(Term.Name("ldfi/akka/Controller"), Term.Name("greenLight")), listofargs)
+    val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listofargs)
     val elsep = Term.Block(List[Stat]())
     val thenp = Term.ApplyInfix(lhs, op, Nil, args)
 

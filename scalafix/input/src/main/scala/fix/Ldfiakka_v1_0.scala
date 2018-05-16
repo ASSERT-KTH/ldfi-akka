@@ -32,31 +32,45 @@ object Node {
   def props: Props = Props(new Node())
 }
 
-class Node extends Actor with ActorLogging {
+class Node extends Actor {
   val name = self.path.name
+
   def receive = {
     case Broadcast(pload) =>
+      //Log the payload in global logs
       logBroadcast(pload)
+
     case Start(Broadcast(pload)) =>
+      //Broadcast this message to all neighbors
       sendBroadcast(Broadcast(pload))
+      //Log the payload in global logs
       logBroadcast(pload)
+      //Right now I'm just killing the Start actor after broadcasting the message.
+      //TODO: Find much better way of doing this, i.e, if no messages has been sent, then finish or something
       context.system.terminate()
   }
+
   def sendBroadcast(broadcast: Broadcast): Unit = {
     Relations.relations.get(name) match {
+      //Broadcast this payload to all neighboring actors
       case Some(neighbors: List[ActorRef]) =>
         for(neigh <- neighbors) {
           neigh ! broadcast
         }
-      case None =>
+      //Actor has no neighbors. Do nothing.
+      case None => //Do nothing
     }
   }
+
   def logBroadcast(pload: String): Unit = {
     Logs.logs.get(name) match {
+      //Actor mutates only its own logs, so no risks for race-conditions
       case Some(logs: mutable.Set[Log]) => logs += Log(pload)
+      //If no logs exists yet, create log list with actor
       case None => Logs.logs.+=((name, mutable.Set(Log(pload))))
     }
   }
+
 }
 
 class SimpleDeliv {
@@ -165,3 +179,4 @@ class SimpleDeliv {
 
 
 }
+

@@ -7,11 +7,12 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor._
 import akka.event._
-import ldfi.akka.Controller.Controller
 
 import scala.collection.{mutable, _}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import akka.testkit.CallingThreadDispatcher
+import ldfi.akka.Controller.Controller
 
 case class Start(bcast: Broadcast)
 case class Broadcast(pload: String)
@@ -35,29 +36,43 @@ object Node {
 
 class Node extends Actor with ActorLogging {
   val name = self.path.name
+
   def receive = LoggingReceive {
     case Broadcast(pload) =>
+      //Log the payload in global logs
       logBroadcast(pload)
+
     case Start(Broadcast(pload)) =>
+      //Broadcast this message to all neighbors
       sendBroadcast(Broadcast(pload))
+      //Log the payload in global logs
       logBroadcast(pload)
+      //Right now I'm just killing the Start actor after broadcasting the message.
+      //TODO: Find much better way of doing this, i.e, if no messages has been sent, then finish or something
       context.system.terminate()
   }
+
   def sendBroadcast(broadcast: Broadcast): Unit = {
     Relations.relations.get(name) match {
+      //Broadcast this payload to all neighboring actors
       case Some(neighbors: List[ActorRef]) =>
         for(neigh <- neighbors) {
           if (Controller.greenLight(self, neigh)) neigh ! broadcast else {}
         }
-      case None =>
+      //Actor has no neighbors. Do nothing.
+      case None => //Do nothing
     }
   }
+
   def logBroadcast(pload: String): Unit = {
     Logs.logs.get(name) match {
+      //Actor mutates only its own logs, so no risks for race-conditions
       case Some(logs: mutable.Set[Log]) => logs += Log(pload)
+      //If no logs exists yet, create log list with actor
       case None => Logs.logs.+=((name, mutable.Set(Log(pload))))
     }
   }
+
 }
 
 class SimpleDeliv {
@@ -65,9 +80,9 @@ class SimpleDeliv {
   val system = ActorSystem("system")
 
   //Creating nodes
-  val A = system.actorOf(Node.props, "A")
-  val B = system.actorOf(Node.props, "B")
-  val C = system.actorOf(Node.props, "C")
+  val A = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "A")
+  val B = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "B")
+  val C = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "C")
 
   //Creating an immutable neighboring list. No neighbors can be added dynamically for now.
   val actors = List(A, B, C)
@@ -166,3 +181,4 @@ class SimpleDeliv {
 
 
 }
+

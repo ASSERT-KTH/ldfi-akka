@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit
 import akka.actor._
 import akka.event._
 
-import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.collection.{mutable, _}
 import akka.testkit.CallingThreadDispatcher
