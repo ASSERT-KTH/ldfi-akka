@@ -1,6 +1,3 @@
-/*
-rule = "class:fix.Ldfiakka_v1_0"
-*/
 package fix
 
 import java.util.concurrent.TimeUnit
