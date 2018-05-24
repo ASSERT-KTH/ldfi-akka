@@ -6,33 +6,28 @@ import scala.meta._
 
 final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(index, "Ldfiakka_v1_0") {
   override def fix(ctx: RuleCtx): Patch = {
-    //ctx.debugIndex()
-    //println(s"Tree.syntax: " + ctx.tree.syntax)
-    //println(s"Tree.structure: " + ctx.tree.structure)
+    //debugRules(ctx)
     importController(ctx) + importDispatcher(ctx) +
       addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) +
       addControllerGreenLight(ctx) + addDispatcherToProps(ctx)
   }
 
+  //import ldfi.akka.Controller.Controller
   def importController(ctx: RuleCtx): Patch = {
-    //import ldfi.akka.Controller.Controller
-
     val importee = Importee.Name(Name.Indeterminate("Controller"))
     val importer = Importer(Term.Name("ldfi.akka.Controller"), List(importee))
     ctx.addGlobalImport(importer)
   }
 
+  //import akka.testkit.CallingThreadDispatcher
   def importDispatcher(ctx: RuleCtx): Patch = {
-    //import akka.testkit.CallingThreadDispatcher
-
     val importee = Importee.Name(Name.Indeterminate("CallingThreadDispatcher"))
     val importer = Importer(Term.Name("akka.testkit"), List(importee))
     ctx.addGlobalImport(importer)
-
   }
 
+  //class _ extends Actor => class _ extends Actor with ActorLogging
   def addExtendsWithActorLogging(ctx: RuleCtx): Patch = {
-    //class _ extends Actor => class _ extends Actor with ActorLogging
     ctx.tree.collect {
       case parent @ Defn.Class(_, _, _, _, template) =>
         if(isActorClassWithNoLogging(template)){
@@ -45,8 +40,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     }.asPatch
   }
 
+  //class _ extends Actor => class _ extends Actor with ActorLogging
   def addLoggingReceive (ctx: RuleCtx): Patch = {
-    //class _ extends Actor => class _ extends Actor with ActorLogging
     ctx.tree.collect {
       case t @ Defn.Def(_, name, _, _, _, body) if name.value == "receive" =>
         ctx.addLeft(body, "LoggingReceive ")
@@ -54,8 +49,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     }.asPatch
   }
 
+  //_ ! _ => if(Controller.greenLight) _ ! _ else {}
   def addControllerGreenLight(ctx: RuleCtx): Patch = {
-    //_ ! _ => if(Controller.greenLight) _ ! _ else {}
     var patch = Patch.empty
     ctx.tree.collect {
       case templ @ Template (_, inits, _, stats) if isExtendedWithActor(inits) =>
@@ -71,8 +66,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     patch
   }
 
+  //_.actorOf(_, _) => _.actorOf(_.withDispatcher(CallingThreadDispatcher.Id), _)
   def addDispatcherToProps(ctx: RuleCtx): Patch = {
-    //_.actorOf(_, _) => _.actorOf(_.withDispatcher(CallingThreadDispatcher.Id), _)
     ctx.tree.collect {
       case apply @ Term.Apply(fun, args) =>
         val initsActor = fun.collect { case term @ Term.Name(value) if value == "actorOf" => term }.nonEmpty
@@ -87,7 +82,6 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     }.asPatch
   }
 
-
   //Helper functions
 
   def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
@@ -99,26 +93,17 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     Term.If(condp, thenp, elsep)
   }
 
-  def isActorClassWithNoLogging(templ: Template): Boolean = {
-    val inits = templ.inits
-    (isExtendedWithActor(inits) && !isExtendedWithActorLogging(inits))
+  def isActorClassWithNoLogging(templ: Template): Boolean =
+    (isExtendedWithActor(templ.inits) && !isExtendedWithActorLogging(templ.inits))
+
+  def isExtendedWithActor(inits: List[Init]): Boolean = inits.exists(i => i.tpe.toString() == "Actor")
+
+  def isExtendedWithActorLogging(inits: List[Init]): Boolean = inits.exists(i => i.tpe.toString() == "ActorLogging")
+
+  def debugRules(ctx: RuleCtx): Unit = {
+    ctx.debugIndex()
+    println(s"Tree.syntax: " + ctx.tree.syntax)
+    println(s"Tree.structure: " + ctx.tree.structure)
   }
 
-  def isExtendedWithActor(inits: List[Init]): Boolean = {
-    var isExtendedWithActor = false
-    for (init <- inits){
-      if(init.tpe.toString == "Actor")
-        isExtendedWithActor = true
-    }
-    isExtendedWithActor
-  }
-
-  def isExtendedWithActorLogging(inits: List[Init]): Boolean = {
-    var isExtendedWithActorLogging = false
-    for (init <- inits){
-      if(init.tpe.toString == "ActorLogging")
-        isExtendedWithActorLogging = true
-    }
-    isExtendedWithActorLogging
-  }
 }
