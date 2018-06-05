@@ -80,6 +80,8 @@ object Evaluator {
 
   def forwardStep(prog : String, hypothesis: Set[Literal]): Boolean = {
     if (hypothesis.nonEmpty) {
+      //Reset old info in Controller
+      Controller.reset()
       //set controller injections
       Controller.setInjections(hypothesis)
 
