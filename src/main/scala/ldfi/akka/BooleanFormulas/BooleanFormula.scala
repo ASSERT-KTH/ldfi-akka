@@ -114,6 +114,11 @@ object BooleanFormula {
       literals = literal :: literals
     }
 
+    def getMessagesInClause: List[Message] = literals.collect {case m:Message => m}
+
+    def getNodesInClause: Set[Node] = literals.collect {case n:Node => n}.toSet
+
+
     def literalExistsInClause(literal: Literal): Boolean = literals.contains(literal)
 
   }

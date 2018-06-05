@@ -46,39 +46,33 @@ object CNFConverter {
   }
 
   def prettyPrintClause(clause: Clause): Unit = {
-    var cnt = 0
-    for(literal <- clause.literals){
-      literal match {
-        case Node(node, time) =>
-          print("P(" + node + ", " )
-          //print (time.year + "-" + time.month + "-" + time.day + "::" + time.hour + ":" + time.minute + ":" + time.second + ":" + time.millisecond + ")")
-          print(time + ")")
-        case Message(sender, recipient, time) =>
-          print("M(" + sender + ", " + recipient + ", ")
-          print(time + ")")
-          //print (time.year + "-" + time.month + "-" + time.day + "::" + time.hour + ":" + time.minute + ":" + time.second + ":" + time.millisecond + ")")
-        case _ => println("ERROR: literal not Node or Message!")
-      }
-      if(cnt != clause.literals.size - 1){
-        print(" V ")
-      }
-      cnt = cnt + 1
-    }
+    val msgs = clause.getMessagesInClause
+    val nodes = clause.getNodesInClause
+
+    val prettyMsgs = (for (msg <- msgs) yield
+      "M(" + msg.sender + ", " + msg.recipient + ", " + msg.time + ")" + " V ").mkString
+
+    val prettyNodes = (for ((node, count) <- nodes.zipWithIndex) yield {
+        if(count < nodes.size - 1) "P(" + node.node + ", " + node.time + ")" + " V "
+        else "P(" + node.node + ", " + node.time + ")"
+    }).mkString
+
+    val prettyClause = prettyMsgs + prettyNodes
+    print(prettyClause)
   }
 
+
   def prettyPrintFormula(formula: Formula): Unit = {
-    var it = 1
     println("\n\nBoolean Formula:")
-    for (clause <- formula.clauses){
+    for ((clause, cnt) <- formula.clauses.zipWithIndex){
       print("(")
       prettyPrintClause(clause)
-      if(it != formula.clauses.size){
-        print(")")
-        print(" ∧\n")
+      if(cnt < formula.clauses.size - 1){
+        print(") ∧\n")
       }
-      it = it + 1
     }
     print (")")
+
   }
 
 }
