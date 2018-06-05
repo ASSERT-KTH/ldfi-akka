@@ -54,7 +54,7 @@ object BooleanFormula {
     def getLiteralId(literal: Literal): Int = {
       literalsToId.get(literal) match {
         case Some(id) => id
-        case None => -999 //sys.error("LITERAL DOES NOT EXIST IN HASHMAP literalsToId")
+        case None => sys.error("Literal: " + literal + ", does not exist in hashmap literalsToId")
       }
     }
 

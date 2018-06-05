@@ -8,7 +8,7 @@ import akka.event._
 import scala.concurrent.duration.Duration
 import scala.collection.{mutable, _}
 import akka.testkit.CallingThreadDispatcher
-import ldfi.akka.Controller.Controller
+import ldfi.akka.Controller
 
 import scala.concurrent.Await
 
@@ -181,4 +181,3 @@ class SimpleDeliv {
 
 
 }
-

@@ -6,6 +6,6 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     new PrintWriter("logs.log") {write("");close()}
-    Evaluator.evaluateProg("SimpleDeliv")
+    Evaluator.evaluate("SimpleDeliv")
   }
 }

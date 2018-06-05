@@ -9,7 +9,7 @@ import scala.collection.{mutable, _}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import akka.testkit.CallingThreadDispatcher
-import ldfi.akka.Controller.Controller
+import ldfi.akka.Controller
 
 case class Start(bcast: Broadcast)
 case class Broadcast(pload: String)

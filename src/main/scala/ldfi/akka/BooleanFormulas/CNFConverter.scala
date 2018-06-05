@@ -19,14 +19,14 @@ object CNFConverter {
 
   def addRowToClause(clause: Clause, line: Row): Unit = {
     val messageLiteral = getMessage(line)
-    /*
     val senderNodeLiteral  = getSenderNode(line)
     val recipientNodeLiteral = getRecipientNode(line)
+
     if(!clause.literalExistsInClause(senderNodeLiteral))
       clause.addLiteralToClause(senderNodeLiteral)
+
     if(!clause.literalExistsInClause(recipientNodeLiteral))
       clause.addLiteralToClause(recipientNodeLiteral)
-    */
 
     //all messages are unique
     clause.addLiteralToClause(messageLiteral)
