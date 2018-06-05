@@ -9,7 +9,6 @@ object NewController {
   private var infoHolder : infoHolder = new infoHolder
   private var injections : Set[Literal] = Set.empty
 
-  //mutable state for current run
   private class infoHolder {
     private var previousSender : String = _
     private var time : Int = 0
