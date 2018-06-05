@@ -12,7 +12,7 @@ object Evaluator {
   //This can be changed
   val input : Source = Source.fromFile("logs.log")
   val formula = new Formula
-  var solToFspec : Map[Set[Literal], FailureSpec] = Map.empty
+  var solToFSpec : Map[Set[Literal], FailureSpec] = Map.empty
 
   def evaluate(prog: String): Unit = {
 
@@ -26,16 +26,14 @@ object Evaluator {
     val format = AkkaParser.parse(input, Set.empty)
     //Convert the formattedlogs to CNF formula
     CNFConverter.run(format, formula)
-    CNFConverter.prettyPrintFormula(formula)
 
 
     /************************************************
-    Get initial failure spec and start evaluator
+    Set initial failure spec and start evaluator
     ************************************************/
     //Initial failurespec from failure-free program
     val initFailureSpec = FailureSpec(
-      //eot = formula.getLatestTime + 1,
-      eot = 999,
+      eot = formula.getLatestTime + 1,
       eff = 2,
       maxCrashes = 0,
       nodes = formula.getAllNodes.toSet,
@@ -73,7 +71,7 @@ object Evaluator {
       }
       //hypothesis is real solution
       else{
-        solToFspec += (hypothesis -> failureSpec)
+        solToFSpec += (hypothesis -> failureSpec)
       }
     }
 
@@ -108,9 +106,8 @@ object Evaluator {
     CNFConverter.run(format, formula)
     CNFConverter.prettyPrintFormula(formula)
 
-
     //get new hypotheses from SAT-solver
-    val hypotheses = LightSAT4JSolver.solve(formula, failureSpec)
+    val hypotheses = SAT4JSolver.solve(formula, failureSpec)
     hypotheses
   }
 
@@ -120,7 +117,7 @@ object Evaluator {
       "********************************************************\n" +
       "**************** FAILURE SPECIFICATIONS ****************\n" +
       "********************************************************")
-    solToFspec.foreach( elem =>
+    solToFSpec.foreach( elem =>
       print("\nFailure Specification: " + elem._2)
     )
   }

@@ -28,9 +28,9 @@ object BooleanFormula {
 
     def addClause(clause: Clause): Unit = clauses = clause :: clauses
 
-    def getAllLiterals: List[Literal] = clauses.flatMap(c => c.literals)
+    def getAllLiterals: Set[Literal] = clauses.flatMap(c => c.literals).toSet
 
-    def getAllNodes: List[Node] = clauses.flatMap(c => c.literals.collect{ case n:Node => n })
+    def getAllNodes: Set[Node] = clauses.flatMap(c => c.literals.collect{ case n:Node => n }).toSet
 
     def getAllMessages: List[Message] = clauses.flatMap(c => c.literals.collect{ case msg:Message => msg })
 

@@ -24,14 +24,15 @@ case class FailureSpec(eot: Int,
 
 //influenced by
 //https://github.com/palvaro/molly/blob/master/src/main/scala/edu/berkeley/cs/boom/molly/derivations/SAT4JSolver.scala
-object LightSAT4JSolver {
+object SAT4JSolver {
 
   def solve(formula: Formula, failureSpec: FailureSpec): Set[Set[Literal]] = {
 
     val solver = SolverFactory.newLight()
     solver.setTimeout(60)
-    val allNodes = formula.getAllNodes
-    val allMessages = formula.getAllMessages
+    //Set is invariant in its type, so I have to convert back to list in order to pass it as argument in convertVec..
+    val allNodes = formula.getAllNodes.toList
+    val allMessages = formula.getAllMessages.toList
 
     val crashedNodes = failureSpec.crashes
     val cutMessages = failureSpec.cuts
