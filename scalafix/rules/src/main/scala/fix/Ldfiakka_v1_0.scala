@@ -60,10 +60,10 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     }.asPatch
   }
 
-  //class _ extends Actor => class _ extends Actor with ActorLogging
+  //def receive = {...} => def receive = LoggingReceive = {...}
   def addLoggingReceive (ctx: RuleCtx): Patch = {
     ctx.tree.collect {
-      case t @ Defn.Def(_, name, _, _, _, body) if name.value == "receive" =>
+      case t @ Defn.Def(_, name, _, _, _, body) if name.value == "receive" && !hasLoggingReceive(body) =>
         ctx.addLeft(body, "LoggingReceive ")
       case _ => Patch.empty
     }.asPatch
@@ -116,6 +116,13 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     stats.collect {
       case select @ Term.Select(Term.Name(fst), Term.Name(snd)) if fst == "Controller" && snd == "greenLight" =>
         select
+    }.nonEmpty
+  }
+
+  def hasLoggingReceive(body: Term): Boolean = {
+    body.collect {
+      case term @ Term.Name(value) if value == "LoggingReceive" =>
+        term
     }.nonEmpty
   }
 
