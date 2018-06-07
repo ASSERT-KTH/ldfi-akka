@@ -1,17 +1,13 @@
 package ldfi.akka.InteractiveProtocols.SimpleDeliv
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor._
-import akka.event._
-
-import scala.concurrent.duration.Duration
 import scala.collection.{mutable, _}
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import akka.event._
 import akka.testkit.CallingThreadDispatcher
 import ldfi.akka.Controller
-
-import scala.concurrent.Await
-
 
 
 case class Start(bcast: Broadcast)
@@ -20,13 +16,13 @@ case class Log(pload: String)
 
 //The global neighbor map of all nodes
 object Relations {
-  var relations: immutable.HashMap[String, List[ActorRef]] = immutable.HashMap[String, List[ActorRef]]()
+  var relations: Map[String, List[ActorRef]] = Map.empty
 }
 
 //Global logs
 object Logs {
   //Hashmap is mutable, but no risk of race-condition because each actor only mutate its own logs.
-  var logs = immutable.HashMap[String, mutable.Set[Log]]()
+  var logs : Map[String, mutable.Set[Log]] = Map.empty
 }
 
 //Propsfactory. Do not have any constructor parameters for now, but still best practice.
@@ -35,9 +31,9 @@ object Node {
 }
 
 class Node extends Actor with ActorLogging {
-  val name = self.path.name
+  val name : String = self.path.name
 
-  def receive = LoggingReceive {
+  def receive : Receive = LoggingReceive {
     case Broadcast(pload) =>
       //Log the payload in global logs
       logBroadcast(pload)
@@ -77,24 +73,24 @@ class Node extends Actor with ActorLogging {
 
 class SimpleDeliv {
   //Creating actor system
-  val system = ActorSystem("system")
+  val system : ActorSystem = ActorSystem("system")
 
   //Creating nodes
-  val A = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "A")
-  val B = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "B")
-  val C = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "C")
+  val A : ActorRef = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "A")
+  val B : ActorRef = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "B")
+  val C : ActorRef = system.actorOf(Node.props.withDispatcher(CallingThreadDispatcher.Id), "C")
 
   //Creating an immutable neighboring list. No neighbors can be added dynamically for now.
-  val actors = List(A, B, C)
+  val actors : List[ActorRef] = List(A, B, C)
 
   /*
    Adding relations. All nodes are neighbors to each other.
    **Not using Akka's Broadcast method because I want to have control over which nodes can communicate.**
   */
-  Relations.relations = immutable.HashMap(("A", List(B, C)), ("B", List(A, C)), ("C", List(A, B)))
+  Relations.relations = Map(("A", List(B, C)), ("B", List(A, C)), ("C", List(A, B)))
 
   //The logs are initially empty
-  Logs.logs = immutable.HashMap[String, mutable.Set[Log]]()
+  Logs.logs = Map.empty
 
   def run(): Unit = {
     //Start Simulation
