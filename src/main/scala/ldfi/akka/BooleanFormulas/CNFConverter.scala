@@ -12,9 +12,7 @@ object CNFConverter {
       addRowToClause(clause, line)
     }
     //prettyPrintClause(clause)
-
     formula.addClause(clause)
-
   }
 
   def addRowToClause(clause: Clause, line: Row): Unit = {
@@ -30,20 +28,13 @@ object CNFConverter {
 
     //all messages are unique
     clause.addLiteralToClause(messageLiteral)
-
   }
 
-  def getSenderNode(line: Row): Node = {
-    Node(line.sender, line.time)
-  }
-  def getRecipientNode(line: Row): Node = {
-    Node(line.recipient, line.time)
-  }
+  def getSenderNode(line: Row): Node = Node(line.sender, line.time)
 
+  def getRecipientNode(line: Row): Node = Node(line.recipient, line.time)
 
-  def getMessage(line: Row): Message = {
-    Message(line.sender, line.recipient, line.time)
-  }
+  def getMessage(line: Row): Message = Message(line.sender, line.recipient, line.time)
 
   def prettyPrintClause(clause: Clause): Unit = {
     val msgs = clause.getMessagesInClause
@@ -61,7 +52,6 @@ object CNFConverter {
     print(prettyClause)
   }
 
-
   def prettyPrintFormula(formula: Formula): Unit = {
     println("\n\nBoolean Formula:")
     for ((clause, cnt) <- formula.clauses.zipWithIndex){
@@ -72,7 +62,6 @@ object CNFConverter {
       }
     }
     print (")")
-
   }
 
 }

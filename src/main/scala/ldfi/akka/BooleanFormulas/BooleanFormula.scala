@@ -105,7 +105,6 @@ object BooleanFormula {
 
   }
 
-
   class Clause extends Formula {
     var literals : List[Literal] = List.empty
 
@@ -118,11 +117,9 @@ object BooleanFormula {
 
     def getNodesInClause: Set[Node] = literals.collect {case n:Node => n}.toSet
 
-
     def literalExistsInClause(literal: Literal): Boolean = literals.contains(literal)
 
   }
-
 
   sealed trait Literal extends Formula
 

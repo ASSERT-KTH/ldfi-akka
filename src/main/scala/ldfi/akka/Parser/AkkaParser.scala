@@ -10,9 +10,9 @@ import scala.io.Source
 object AkkaParser {
 
   object Clock {
-    var time = 0
+    private var time : Int = 0
+
     def tick(): Unit = time = time + 1
-    def tick(steps: Int): Unit = time = time + steps
     def getTime: Int = time
     def setTime(newTime: Int): Unit = time = newTime
     def reset(): Unit = time = 0

@@ -1,26 +1,11 @@
 package ldfi.akka.BooleanFormulas
 
-import java.io._
 import ldfi.akka.BooleanFormulas.BooleanFormula._
 import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.tools.ModelIterator
-
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
-
-/*
-case class FailureSpec(eot: Int,
-                       eff: Int,
-                       maxCrashes: Int,
-                       nodes: Set[Node],
-                       messages: Set[Message],
-                       crashes: Set[Node] = Set.empty,
-                       cuts: Set[Message] = Set.empty)
-
-*/
 
 //influenced by
 //https://github.com/palvaro/molly/blob/master/src/main/scala/edu/berkeley/cs/boom/molly/derivations/SAT4JSolver.scala
@@ -30,9 +15,9 @@ object SAT4JSolver {
 
     val solver = SolverFactory.newLight()
     solver.setTimeout(60)
-    //Set is invariant in its type, so I have to convert back to list in order to pass it as argument in convertVec..
+    //Sets are invariant in their type, thus Set[Node] not <: Set[Literal]: we convert to List[T+]
     val allNodes = formula.getAllNodes.toList
-    val allMessages = formula.getAllMessages.toList
+    val allMessages = formula.getAllMessages
 
     val crashedNodes = failureSpec.crashes
     val cutMessages = failureSpec.cuts
@@ -96,8 +81,10 @@ object SAT4JSolver {
     case 1 =>
       val model = models.head
       val isSuperSet = entire.filter(_ != model).exists { m => m.subsetOf(model) }
-      if(isSuperSet) Set(Set.empty)
-      else Set(model)
+      if(isSuperSet)
+        Set(Set.empty)
+      else
+        Set(model)
     case _ => (removeSuperSets(ListBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).
       filter(_.nonEmpty)
   }

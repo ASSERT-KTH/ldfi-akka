@@ -14,7 +14,6 @@ case class FailureSpec(eot: Int,
   require(crashes.size <= maxCrashes, "Can't specify more than maxCrashes crashes")
   require(cuts.forall(_.time < eff), "Can't have omissions at or after the EFF")
 
-
 }
 
 

@@ -16,12 +16,13 @@ object Evaluator {
 
   def evaluate(prog: String): Unit = {
 
-    //Obtain a failure-free outcome of the program
+    /************************************************
+    Obtain a failure-free outcome of the program
+    ************************************************/
     val correctness = forwardStep(prog, Set.empty)
     if (!correctness) {
       sys.error("Forwardstep: program: " + prog + ", does not work even with no failure injections.")
     }
-
     //Format the program and convert it to CNF
     val format = AkkaParser.parse(input, Set.empty)
     //Convert the formattedlogs to CNF formula
