@@ -34,7 +34,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     val importee = Importee.Name(Name.Indeterminate("CallingThreadDispatcher"))
     val importer = Importer(Term.Name("akka.testkit"), List(importee))
 
-    //only import controller to files containing actor classes
+    //only import dispatcher to files containing actor classes
     val actorClasses = ctx.tree.collect {
       case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
         parent
