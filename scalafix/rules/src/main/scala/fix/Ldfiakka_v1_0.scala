@@ -73,12 +73,12 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   def addControllerGreenLight(ctx: RuleCtx): Patch = {
     var patch = Patch.empty
     ctx.tree.collect {
-      case templ @ Template (_, inits, _, stats) if isExtendedWithActor(inits) =>
+      case templ @ Template (_, inits, _, stats) if isExtendedWithActor(inits) && !hasGreenLight(stats) =>
         for(stat <- stats){
           stat.collect  {
             case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
               val newIfTree = getIfTerm(lhs, op, args)
-              patch = patch + ctx.replaceTree(appInf, newIfTree.toString)
+              patch += ctx.replaceTree(appInf, newIfTree.toString)
             case _ => Patch.empty
           }
         }
@@ -110,6 +110,13 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     val thenp = Term.ApplyInfix(lhs, op, Nil, args)
 
     Term.If(condp, thenp, elsep)
+  }
+
+  def hasGreenLight(stats: List[Stat]): Boolean = {
+    stats.collect {
+      case select @ Term.Select(Term.Name(fst), Term.Name(snd)) if fst == "Controller" && snd == "greenLight" =>
+        select
+    }.nonEmpty
   }
 
   def isActorClassWithNoLogging(templ: Template): Boolean =
