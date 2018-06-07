@@ -16,14 +16,34 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   def importController(ctx: RuleCtx): Patch = {
     val importee = Importee.Name(Name.Indeterminate("Controller"))
     val importer = Importer(Term.Name("ldfi.akka"), List(importee))
-    ctx.addGlobalImport(importer)
+
+    //only import controller to files containing actor classes
+    val actorClasses = ctx.tree.collect {
+      case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
+        parent
+    }.nonEmpty
+
+    if(actorClasses)
+      ctx.addGlobalImport(importer)
+    else
+      Patch.empty
   }
 
   //import akka.testkit.CallingThreadDispatcher
   def importDispatcher(ctx: RuleCtx): Patch = {
     val importee = Importee.Name(Name.Indeterminate("CallingThreadDispatcher"))
     val importer = Importer(Term.Name("akka.testkit"), List(importee))
-    ctx.addGlobalImport(importer)
+
+    //only import controller to files containing actor classes
+    val actorClasses = ctx.tree.collect {
+      case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
+        parent
+    }.nonEmpty
+
+    if(actorClasses)
+      ctx.addGlobalImport(importer)
+    else
+      Patch.empty
   }
 
   //class _ extends Actor => class _ extends Actor with ActorLogging
@@ -83,7 +103,6 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   //Helper functions
-
   def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
     val listofargs = List[Term](Term.Name("self"), lhs)
     val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listofargs)
