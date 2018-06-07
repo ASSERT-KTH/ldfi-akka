@@ -88,18 +88,24 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
 
   //_.actorOf(_, _) => _.actorOf(_.withDispatcher(CallingThreadDispatcher.Id), _)
   def addDispatcherToProps(ctx: RuleCtx): Patch = {
-    ctx.tree.collect {
-      case apply @ Term.Apply(fun, args) =>
-        val initsActor = fun.collect { case term @ Term.Name(value) if value == "actorOf" => term }.nonEmpty
-        if(initsActor){
-          args.lift(args.length - 2) match {
-            case Some(props) => ctx.addRight(props, ".withDispatcher(CallingThreadDispatcher.Id)")
-            case _ => Patch.empty
+    //already is running on single thread with this specific dispatcher
+    if(runsOnCallingThreadDispatcher(ctx)){
+      Patch.empty
+    }
+    else {
+      ctx.tree.collect {
+        case apply@Term.Apply(fun, args) =>
+          val initsActor = fun.collect { case term@Term.Name(value) if value == "actorOf" => term }.nonEmpty
+          if (initsActor) {
+            args.lift(args.length - 2) match {
+              case Some(props) => ctx.addRight(props, ".withDispatcher(CallingThreadDispatcher.Id)")
+              case _ => Patch.empty
+            }
           }
-        }
-        else Patch.empty
-      case _ => Patch.empty
-    }.asPatch
+          else Patch.empty
+        case _ => Patch.empty
+      }.asPatch
+    }
   }
 
   //Helper functions
@@ -125,6 +131,27 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
       case term @ Term.Name(value) if value == "LoggingReceive" =>
         term
     }.nonEmpty
+  }
+
+  def runsOnCallingThreadDispatcher(ctx: RuleCtx): Boolean = {
+    ctx.tree.collect {
+      case templ @ Template(_, _, _, stats) =>
+        stats.exists { s =>
+
+          val withDispatcher = s.collect {
+            case name @ Term.Name(valu) if valu == "withDispatcher" =>
+              name
+          }.nonEmpty
+
+          val callingThreadDispatcherId = s.collect {
+            case select @ Term.Select(Term.Name(fst), Term.Name(snd))
+              if fst == "CallingThreadDispatcher" && snd == "Id" =>
+              select
+          }.nonEmpty
+
+          withDispatcher && callingThreadDispatcherId
+        }
+    }.exists(b => b)
   }
 
   def isActorClassWithNoLogging(templ: Template): Boolean =
