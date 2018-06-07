@@ -113,10 +113,11 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def hasGreenLight(stats: List[Stat]): Boolean = {
-    stats.collect {
+    stats.exists {s => s.collect {
       case select @ Term.Select(Term.Name(fst), Term.Name(snd)) if fst == "Controller" && snd == "greenLight" =>
         select
     }.nonEmpty
+    }
   }
 
   def hasLoggingReceive(body: Term): Boolean = {
