@@ -12,10 +12,10 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
       addControllerGreenLight(ctx) + addDispatcherToProps(ctx)
   }
 
-  //import ldfi.akka.Controller.Controller
+  //import ldfi.akka.Controller
   def importController(ctx: RuleCtx): Patch = {
     val importee = Importee.Name(Name.Indeterminate("Controller"))
-    val importer = Importer(Term.Name("ldfi.akka.Controller"), List(importee))
+    val importer = Importer(Term.Name("ldfi.akka"), List(importee))
     ctx.addGlobalImport(importer)
   }
 
