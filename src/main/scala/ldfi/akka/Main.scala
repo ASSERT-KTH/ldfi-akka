@@ -2,7 +2,7 @@ package ldfi.akka
 
 import java.io.PrintWriter
 import java.io.File
-import java.nio.file.Files
+import java.nio.file._
 import sys.process._
 
 object Main {
@@ -24,14 +24,14 @@ object Main {
       case None => sys.error("No main class was given. For usage, use --help")
     }
 
-    val verifyClass = ctx.verifyProg match {
+    val verifyClass = ctx.verifyClass match {
       case Some(vc) if vc.exists() => vc
       case Some(vc) => sys.error("Verify Class: '" + vc.getCanonicalPath + "' does not exist")
       case None => sys.error("No verify class was given. For usage, use --help")
     }
 
     new PrintWriter("logs.log") {write("");close()}
-    Evaluator.evaluate("SimpleDeliv")
+    //Evaluator.evaluate("SimpleDeliv")
 
 
   }
@@ -39,7 +39,9 @@ object Main {
 
   def scalafixRewrite(progDir: File): Unit = {
     copyProgram(progDir)
-    val rewrite = "./scalafixCli --rules github:KTH/ldfi-akka/v1.0 program/" !
+    val pathToPrograms = System.getProperty("user.dir") + "/program"
+    println(pathToPrograms)
+    val rewrite = "./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + pathToPrograms !
 
     if(rewrite != 0)
       sys.error("Errorcode: " + rewrite + "Failed to rewrite directory: " + progDir.getCanonicalPath)
@@ -48,15 +50,20 @@ object Main {
 
 
   def copyProgram(progDir: File): Unit = {
-    val basePath = "ldfi-akka/program/"
+    val basePath = System.getProperty("user.dir") + "/program/"
     val relativePath = progDir.getCanonicalPath.split("src/main/scala").lift(1) match {
       case Some(path) => path
-      case None => sys.error("Program directory not under src/main/scala but in " + progDir.getCanonicalPath)
+      case None => "" //sys.error("Program directory not under src/main/scala but in " + progDir.getCanonicalPath)
     }
 
     for (file <- progDir.listFiles()){
-      if(file.isDirectory) copyProgram(file)
-      else Files.copy(file.toPath, new File(basePath + relativePath).toPath)
+      if(file.isDirectory) {
+        copyProgram(file)
+      }
+      else {
+        val dest = new File(basePath + relativePath + "/" + file.getName)
+        Files.copy(file.toPath, dest.toPath, StandardCopyOption.REPLACE_EXISTING)
+      }
     }
 
   }
@@ -73,10 +80,10 @@ object Main {
     case "-m" :: mainClass :: rest =>
       processOptions(rest, ctx.copy(mainClass = Some(new File(mainClass))))
 
-    case "-v" :: verifyProg :: rest =>
-      processOptions(rest, ctx.copy(mainClass = Some(new File(verifyProg))))
+    case "-v" :: verifyClass :: rest =>
+      processOptions(rest, ctx.copy(verifyClass = Some(new File(verifyClass))))
 
-    case List.empty => ctx
+    case List() => ctx
 
     case unknown => sys.error("Option '" + unknown + "' was not recognized. For usage, use --help.")
 
@@ -93,7 +100,7 @@ object Main {
 
   case class Context(programsDir: Option[File] = None,
                      mainClass: Option[File] = None,
-                     verifyProg: Option[File] = None)
+                     verifyClass: Option[File] = None)
 }
 
 
