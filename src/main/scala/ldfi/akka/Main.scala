@@ -42,8 +42,14 @@ object Main {
 
 
   def scalafixRewrite(progDir: File): Unit = {
+    //creating Program directory in ldfi-akka/program
+    val path = Paths.get(basePath)
+    Files.createDirectories(path)
+
+    //copy the source files of project to above directory
     copyProgram(progDir)
 
+    //rewrites source files according to scalafix rules
     val rewrite = "./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + basePath + " --sourceroot ." !
 
     /*
