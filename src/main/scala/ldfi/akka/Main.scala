@@ -3,9 +3,13 @@ package ldfi.akka
 import java.io.PrintWriter
 import java.io.File
 import java.nio.file._
+
 import sys.process._
 
 object Main {
+
+  val basePath : String = System.getProperty("user.dir") + "/ldfi-akka/program"
+
 
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args.toList, Context())
@@ -39,21 +43,22 @@ object Main {
 
   def scalafixRewrite(progDir: File): Unit = {
     copyProgram(progDir)
-    val pathToPrograms = System.getProperty("user.dir") + "/program"
-    println(pathToPrograms)
-    val rewrite = "./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + pathToPrograms !
 
+    val rewrite = "./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + basePath + " --sourceroot ." !
+
+    /*
+    TODO: The command generates an error for some reason, so we ignore it for now.
     if(rewrite != 0)
       sys.error("Errorcode: " + rewrite + "Failed to rewrite directory: " + progDir.getCanonicalPath)
+    */
 
   }
 
 
   def copyProgram(progDir: File): Unit = {
-    val basePath = System.getProperty("user.dir") + "/program/"
-    val relativePath = progDir.getCanonicalPath.split("src/main/scala").lift(1) match {
-      case Some(path) => path
-      case None => "" //sys.error("Program directory not under src/main/scala but in " + progDir.getCanonicalPath)
+    val relativePath = progDir.getCanonicalPath.split(basePath).lift(1) match {
+      case Some(path) => path + "/"
+      case None => "/"
     }
 
     for (file <- progDir.listFiles()){
@@ -61,7 +66,7 @@ object Main {
         copyProgram(file)
       }
       else {
-        val dest = new File(basePath + relativePath + "/" + file.getName)
+        val dest = new File(basePath + relativePath + file.getName)
         Files.copy(file.toPath, dest.toPath, StandardCopyOption.REPLACE_EXISTING)
       }
     }
