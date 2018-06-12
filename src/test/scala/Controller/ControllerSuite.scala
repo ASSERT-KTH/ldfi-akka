@@ -1,8 +1,8 @@
 package Controller
 
-import ldfi.akka.BooleanFormulas.BooleanFormula.{Literal, Message, Node}
+import ldfi.akka.booleanformulas.BooleanFormula._
 import org.scalatest.FunSuite
-import ldfi.akka.Controller._
+import ldfi.akka.evaluation.Controller._
 
 
 class ControllerSuite extends FunSuite {

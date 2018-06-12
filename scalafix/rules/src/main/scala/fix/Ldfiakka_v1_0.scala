@@ -33,7 +33,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   //import ldfi.akka.Controller
   def importController(ctx: RuleCtx): Patch = {
     val importee = Importee.Name(Name.Indeterminate("Controller"))
-    val importer = Importer(Term.Name("ldfi.akka"), List(importee))
+    val importer = Importer(Term.Name("ldfi.akka.evaluation"), List(importee))
 
     //only import controller to files containing actor classes
     val actorClasses = ctx.tree.collect {

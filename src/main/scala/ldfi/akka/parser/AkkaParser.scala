@@ -1,8 +1,8 @@
-package ldfi.akka.Parser
+package ldfi.akka.parser
 
 import java.io.BufferedReader
 
-import ldfi.akka.BooleanFormulas.BooleanFormula.{Literal, Message}
+import ldfi.akka.booleanformulas.BooleanFormula.{Literal, Message}
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.io.Source

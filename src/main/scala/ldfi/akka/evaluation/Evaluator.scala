@@ -1,13 +1,14 @@
-package ldfi.akka
-
-import scala.io.Source
-
-import ldfi.akka.BooleanFormulas.BooleanFormula._
-import ldfi.akka.BooleanFormulas._
-import ldfi.akka.Parser.AkkaParser
+package ldfi.akka.evaluation
 
 import java.lang.reflect.InvocationTargetException
+
+import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.Main.Program
+import ldfi.akka.parser.AkkaParser
+import ldfi.akka.FailureSpec
+
+import scala.io.Source
 
 
 
@@ -83,26 +84,28 @@ object Evaluator {
 
   }
 
-  def forwardStep(prog: Program, hypothesis: Set[Literal]): Boolean = {
+  def forwardStep(program: Program, hypothesis: Set[Literal]): Boolean = {
     //Reset old info in Controller
     Controller.reset()
     //set controller injections
     Controller.setInjections(hypothesis)
 
-    //Create new program and run it
+    //Invoke the main method
     try {
-      prog.mainMethod.setAccessible(true)
-      prog.mainMethod.invoke(prog.mainClassInstance)
+      program.mainMethod.setAccessible(true)
+      program.mainMethod.invoke(program.mainClassInstance)
     } catch {
       case e: InvocationTargetException => sys.error("Invocation of main method failed. " + e.getCause.getMessage)
     }
 
-    val correctness : Boolean = try {
-      prog.verifyMethod.setAccessible(true)
-      prog.verifyMethod.invoke(prog.verifyClassInstance).asInstanceOf[Boolean]
+    //Invoke the verify method
+    val correctness = try {
+      program.verifyMethod.setAccessible(true)
+      program.verifyMethod.invoke(program.verifyClassInstance).asInstanceOf[Boolean]
     } catch {
       case e: InvocationTargetException => sys.error("Invocation of verify method failed. " + e.getCause.getMessage)
     }
+
     correctness
 
   }

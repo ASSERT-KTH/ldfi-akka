@@ -1,4 +1,4 @@
-package ldfi.akka.BooleanFormulas
+package ldfi.akka.booleanformulas
 
 
 object BooleanFormula {

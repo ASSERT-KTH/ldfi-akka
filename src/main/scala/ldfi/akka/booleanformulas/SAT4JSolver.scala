@@ -1,6 +1,6 @@
-package ldfi.akka.BooleanFormulas
+package ldfi.akka.booleanformulas
 
-import ldfi.akka.BooleanFormulas.BooleanFormula._
+import ldfi.akka.booleanformulas.BooleanFormula._
 import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory

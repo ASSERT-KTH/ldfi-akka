@@ -3,10 +3,10 @@ package Parser
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 
-import ldfi.akka.BooleanFormulas.BooleanFormula._
-import ldfi.akka.Controller
-import ldfi.akka.Parser.AkkaParser
-import ldfi.akka.Parser.AkkaParser.{FormattedLogs, Row}
+import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.evaluation.Controller
+import ldfi.akka.parser.AkkaParser
+import ldfi.akka.parser.AkkaParser.{FormattedLogs, Row}
 import org.scalatest.FunSuite
 
 import scala.io.{BufferedSource, Source}

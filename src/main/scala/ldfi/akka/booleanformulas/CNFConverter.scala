@@ -1,7 +1,7 @@
-package ldfi.akka.BooleanFormulas
+package ldfi.akka.booleanformulas
 
-import ldfi.akka.BooleanFormulas.BooleanFormula._
-import ldfi.akka.Parser.AkkaParser._
+import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.parser.AkkaParser._
 
 
 object CNFConverter {

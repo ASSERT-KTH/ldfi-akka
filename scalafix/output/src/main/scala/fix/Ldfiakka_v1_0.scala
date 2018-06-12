@@ -7,7 +7,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import akka.event._
 import akka.testkit.CallingThreadDispatcher
-import ldfi.akka.Controller
+import ldfi.akka.evaluation.Controller
 
 
 case class Start(bcast: Broadcast)

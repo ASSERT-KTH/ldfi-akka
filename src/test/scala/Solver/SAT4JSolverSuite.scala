@@ -1,7 +1,7 @@
 package Solver
 
-import ldfi.akka.BooleanFormulas.BooleanFormula._
-import ldfi.akka.BooleanFormulas.SAT4JSolver
+import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas.SAT4JSolver
 import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.scalatest.FunSuite

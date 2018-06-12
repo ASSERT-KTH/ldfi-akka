@@ -1,7 +1,7 @@
-package ldfi.akka
+package ldfi.akka.evaluation
 
 import akka.actor._
-import ldfi.akka.BooleanFormulas.BooleanFormula.{Literal, Message, Node}
+import ldfi.akka.booleanformulas.BooleanFormula._
 
 object Controller {
   private var infoHolder : infoHolder = new infoHolder
