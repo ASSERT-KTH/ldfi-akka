@@ -1,10 +1,14 @@
 package ldfi.akka
 
-import ldfi.akka.BooleanFormulas.BooleanFormula.{Formula, Literal, Message, Node}
-import ldfi.akka.BooleanFormulas._
-import ldfi.akka.InteractiveProtocols.SimpleDeliv.SimpleDeliv
-import ldfi.akka.Parser.AkkaParser
 import scala.io.Source
+
+import ldfi.akka.BooleanFormulas.BooleanFormula._
+import ldfi.akka.BooleanFormulas._
+import ldfi.akka.Parser.AkkaParser
+
+import java.lang.reflect.InvocationTargetException
+import ldfi.akka.Main.Program
+
 
 
 object Evaluator {
@@ -14,11 +18,11 @@ object Evaluator {
   val formula = new Formula
   var solToFSpec : Map[Set[Literal], FailureSpec] = Map.empty
 
-  def evaluate(prog: String): Unit = {
+  def evaluate(prog: Program): Unit = {
 
     /************************************************
     Obtain a failure-free outcome of the program
-    ************************************************/
+      ************************************************/
     val correctness = forwardStep(prog, Set.empty)
     if (!correctness) {
       sys.error("Forwardstep: program: " + prog + ", does not work even with no failure injections.")
@@ -31,7 +35,7 @@ object Evaluator {
 
     /************************************************
     Set initial failure spec and start evaluator
-    ************************************************/
+      ************************************************/
     //Initial failurespec from failure-free program
     val initFailureSpec = FailureSpec(
       eot = formula.getLatestTime + 1,
@@ -79,24 +83,28 @@ object Evaluator {
 
   }
 
-  def forwardStep(prog : String, hypothesis: Set[Literal]): Boolean = {
+  def forwardStep(prog: Program, hypothesis: Set[Literal]): Boolean = {
     //Reset old info in Controller
     Controller.reset()
     //set controller injections
     Controller.setInjections(hypothesis)
 
     //Create new program and run it
-    val program = prog match {
-      case "SimpleDeliv" =>
-        val simpledeliv = new SimpleDeliv
-        simpledeliv.run()
-        simpledeliv
+    try {
+      prog.mainMethod.setAccessible(true)
+      prog.mainMethod.invoke(prog.mainClassInstance)
+    } catch {
+      case e: InvocationTargetException => sys.error("Invocation of main method failed. " + e.getCause.getMessage)
     }
-    val correctness = program match {
-      case program: SimpleDeliv =>
-        program.verifyPostWithoutAssert()
+
+    val correctness : Boolean = try {
+      prog.verifyMethod.setAccessible(true)
+      prog.verifyMethod.invoke(prog.verifyClassInstance).asInstanceOf[Boolean]
+    } catch {
+      case e: InvocationTargetException => sys.error("Invocation of verify method failed. " + e.getCause.getMessage)
     }
     correctness
+
   }
 
   def backwardStep(failureSpec: FailureSpec): Set[Set[Literal]] = {
