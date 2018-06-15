@@ -10,8 +10,6 @@ import ldfi.akka.FailureSpec
 
 import scala.io.Source
 
-
-
 object Evaluator {
 
   //This can be changed
@@ -90,10 +88,12 @@ object Evaluator {
     //set controller injections
     Controller.setInjections(hypothesis)
 
+    val freshInst = program.verifyClass.newInstance()
+
     //Invoke the main method
     try {
       program.mainMethod.setAccessible(true)
-      program.mainMethod.invoke(program.mainClassInstance)
+      program.mainMethod.invoke(null, Array[String]())
     } catch {
       case e: InvocationTargetException => sys.error("Invocation of main method failed. " + e.getCause.getMessage)
     }
@@ -101,9 +101,10 @@ object Evaluator {
     //Invoke the verify method
     val correctness = try {
       program.verifyMethod.setAccessible(true)
-      program.verifyMethod.invoke(program.verifyClassInstance).asInstanceOf[Boolean]
+      program.verifyMethod.invoke(freshInst).asInstanceOf[Boolean]
     } catch {
       case e: InvocationTargetException => sys.error("Invocation of verify method failed. " + e.getCause.getMessage)
+      case cce: ClassCastException => sys.error("Cast ver method ret type to boolean fail. " + cce.getCause.getMessage)
     }
 
     correctness
