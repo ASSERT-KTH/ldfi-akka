@@ -102,7 +102,7 @@ object Main {
     copyProgram(progDir, progDir)
 
     //rewrites source files according to scalafix rules
-    val rewrite = "ldfi-akka/./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + basePath + " --sourceroot ." !
+    val rewrite = "ldfi-akka/./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + basePath + " --sourceroot ldfi-akka" !
 
     /*
     TODO: The command generates an error for some reason, so we ignore it for now.
