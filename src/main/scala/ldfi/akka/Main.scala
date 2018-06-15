@@ -133,7 +133,6 @@ object Main {
         copyProgram(mainDir, file)
       }
       else{
-        println("Is file: " + file)
         Files.copy(file.toPath, dest.toPath, StandardCopyOption.REPLACE_EXISTING)
       }
     }
