@@ -3,11 +3,12 @@ package ldfi.akka
 import java.io.PrintWriter
 import java.io.File
 import java.nio.file._
+
 import evaluation.Evaluator
 
 import sys.process._
-
 import java.lang.reflect.Method
+import org.apache.commons.io.FileUtils
 
 object Main {
 
@@ -98,7 +99,7 @@ object Main {
     //TODO: Use ScalaFix API for this
     
     //copy the source files of project to above directory
-    copyProgram(progDir)
+    copyProgram(progDir, progDir)
 
     //rewrites source files according to scalafix rules
     val rewrite = "ldfi-akka/./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + basePath + " --sourceroot ." !
@@ -111,24 +112,33 @@ object Main {
 
   }
 
-  def copyProgram(progDir: File): Unit = {
+  def copyProgram(mainDir: File, subDir: File): Unit = {
 
-    val relativePath = progDir.getCanonicalPath.split(basePath).lift(1) match {
-      case Some(path) => path + "/"
-      case None => "/"
-    }
+    for (file <- subDir.listFiles()){
 
-    for (file <- progDir.listFiles()){
-      if(file.isDirectory) {
-        copyProgram(file)
+      val relativePath = file.getPath.split(mainDir.toString).lift(1) match {
+        case Some(path) => path + "/"
+        case None => "/"
       }
-      else {
-        val dest = new File(basePath + relativePath + file.getName)
+
+      val destPath = basePath + relativePath
+      val dest = new File(destPath)
+
+      if(file.isDirectory) {
+        val f = new File(destPath)
+        if(f.exists()) {
+          FileUtils.deleteDirectory(f)
+        }
+        Files.copy(file.toPath, dest.toPath, StandardCopyOption.REPLACE_EXISTING)
+        copyProgram(mainDir, file)
+      }
+      else{
+        println("Is file: " + file)
         Files.copy(file.toPath, dest.toPath, StandardCopyOption.REPLACE_EXISTING)
       }
     }
-  }
 
+  }
 
   def processOptions(args: List[String], ctx: Context): Context = args match {
     case "--help" :: rest =>
