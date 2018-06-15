@@ -11,7 +11,7 @@ import java.lang.reflect.Method
 
 object Main {
 
-  val basePath : String = System.getProperty("user.dir") + "/ldfi-akka/src/main/scala/program"
+  val basePath : String = System.getProperty("user.dir") + "/ldfi-akka/src/main/scala"
 
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args.toList, Context())
@@ -96,11 +96,7 @@ object Main {
   def scalafixRewrite(progDir: File): Unit = {
 
     //TODO: Use ScalaFix API for this
-
-    //creating Program directory in ldfi-akka/program
-    val path = Paths.get(basePath)
-    Files.createDirectories(path)
-
+    
     //copy the source files of project to above directory
     copyProgram(progDir)
 
