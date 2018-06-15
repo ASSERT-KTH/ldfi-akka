@@ -5,6 +5,10 @@ version := "1.1.1"
 
 scalaVersion := "2.12.4"
 
+lazy val myproject = project.settings(
+  scalaVersion := "2.12.4",
+  scalacOptions += "-Ywarn-unused-import"
+)
 
 libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.5.11" % Test
 
