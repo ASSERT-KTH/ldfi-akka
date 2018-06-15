@@ -19,10 +19,7 @@ Ldfi-akka solves the first sub problem by using a SLF4J to log the execution of 
 
 The current implementation can use the LDFI approach on an Akka "equivalent" Dedalus [simple-deliv](https://github.com/palvaro/molly/blob/master/src/test/resources/examples_ft/delivery/simplog.ded). Naturally, as a result of Scala as a language, and therefore Akka by extension, being fundamentally different from Dedalus: the discrepancy in the number of ways to write a given program is large. Therefore, it is unclear whether this would work if simple-deliv was written in a different and unbiased way. With that being said, "ldfi-akka" will encode simple-deliv in a boolean formula, pass it to a SAT-solver and find the solutions that would violate its correctness specification.
 
-To execute the Simple Deliv example so that Ldfi-akka finds counterexamples to simple-deliv:
-
-    git clone https://github.com/KTH/ldfi-akka/
-    sbt run
+To run ldfi-akka on a Akka implementation of simple-deliv head over to [this](https://github.com/ghidei/simpledeliv) link, and follow the instructions. 
 
 ## Running the tests
 To run the tests, run `"sbt tests"`.
