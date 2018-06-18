@@ -17,15 +17,19 @@ object Main {
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args.toList, Context())
 
-    if(ctx.rewrite){
-      //target rewrite directory
+    if(ctx.cpy){
       val progDir = ctx.programsDir match {
         case Some(pd) if pd.exists() => pd
         case Some(pd) => sys.error("Dir: '" + pd.getCanonicalPath + "' does not exist")
         case None => sys.error("No program directory was given. For usage, use --help")
       }
 
-      scalafixRewrite(progDir)
+      //copy the source files of project to above directory
+      copyProgram(progDir, progDir)
+    }
+    else if(ctx.rewrite){
+      //target rewrite directory
+      scalafixRewrite()
     }
     else{
 
@@ -94,12 +98,9 @@ object Main {
   }
 
 
-  def scalafixRewrite(progDir: File): Unit = {
+  def scalafixRewrite(): Unit = {
 
     //TODO: Use ScalaFix API for this
-    
-    //copy the source files of project to above directory
-    copyProgram(progDir, progDir)
 
     //rewrites source files according to scalafix rules
     val rewrite = "ldfi-akka/./scalafixCli --rules github:KTH/ldfi-akka/v1.0 " + basePath + " --sourceroot ldfi-akka" !
@@ -144,11 +145,11 @@ object Main {
       displayHelp()
       sys.exit(0)
 
+    case "--copy" :: prDir :: rest =>
+      processOptions(rest, ctx.copy(cpy = true, programsDir = Some(new File(prDir))))
+
     case "--rewrite" :: rest =>
       processOptions(rest, ctx.copy(rewrite = true))
-
-    case "-d" :: prDir :: rest =>
-      processOptions(rest, ctx.copy(programsDir = Some(new File(prDir))))
 
     case "-m" :: mClass :: rest =>
       processOptions(rest, ctx.copy(mainClass = Some(new File(mClass))))
@@ -164,16 +165,20 @@ object Main {
 
   def displayHelp(): Unit = {
     println("Usage: ldfi-akka [options] -d <progdir> -m <main class> -v <verify class>")
-    println(" --rewrite               rewrite program using scalafix")
-    println(" -d <progDir>            target directory for scalafix rewrites")
-    println(" -m <myproject/main>     path to main file ")
+
+    println(" --copy <myproject/>                             copy program in to ldfi-akka src dir")
+    println(" --rewrite                                       rewrite program using scalafix")
+    println(" -d <progDir>                                    target directory for scalafix rewrites")
+    println(" -m <myproject/main>                             path to main file ")
     println(" -v <myproject/verifyclass.scala verifymethod>   path to file that returns boolean")
+
     println("Options include:")
     println(" --help                  displays this help")
   }
 
-  case class Context(rewrite: Boolean = false,
+  case class Context(cpy: Boolean = false,
                      programsDir: Option[File] = None,
+                     rewrite: Boolean = false,
                      mainClass: Option[File] = None,
                      verifyClass: Option[File] = None,
                      verifyMethod: String = null)
