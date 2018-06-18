@@ -1,9 +1,8 @@
-package Solver
+package booleanformulas
 
+import ldfi.akka.FailureSpec
 import ldfi.akka.booleanformulas.BooleanFormula._
 import ldfi.akka.booleanformulas.SAT4JSolver
-import ldfi.akka.FailureSpec
-import org.sat4j.core.VecInt
 import org.scalatest.FunSuite
 
 import scala.collection.mutable.ListBuffer
@@ -18,7 +17,7 @@ class SAT4JSolverSuite extends FunSuite {
 
   def testLightSat4JSolver(): Unit = {
     val formula = new Formula
-    val clause = new Clause
+    val clause = new Clause(formula)
 
     val msg1 = Message("A", "B", 1)
     val msg2 = Message("A", "C", 1)
@@ -34,10 +33,11 @@ class SAT4JSolverSuite extends FunSuite {
     nodes.foreach(n => clause.addLiteralToClause(n))
     formula.addClause(clause)
 
-    /****************************************************************
-    FORMULA:
-    M(A, B, 1) ∨ M(A, C, 1) ∨ P(A, 1) ∨ P(B, 1) ∨ P(C, 1)
-    *************************************************************/
+
+    /** **************************************************************
+      * FORMULA:
+      * M(A, B, 1) ∨ M(A, C, 1) ∨ P(A, 1) ∨ P(B, 1) ∨ P(C, 1)
+      * ************************************************************/
 
 
     //fpsec1
@@ -47,6 +47,7 @@ class SAT4JSolverSuite extends FunSuite {
     test("Testing SAT4jSolver with fspec: <3, 2, 0>") {
       assert(SAT4JSolver.solve(formula, failureSpec1) == expected1)
     }
+
 
     //fpsec2
     val failureSpec2 = FailureSpec(3, 2, 1, nodes, msgs, Set.empty, Set.empty)
@@ -104,6 +105,7 @@ class SAT4JSolverSuite extends FunSuite {
       assert(SAT4JSolver.solve(formula, failureSpec9) == expected9)
     }
 
+
   }
 
   def testremoveSuperSets(): Unit = {
@@ -113,11 +115,12 @@ class SAT4JSolverSuite extends FunSuite {
       Set(Node("A", 1).asInstanceOf[Literal]),
       Set(Node("A", 1).asInstanceOf[Literal], Node("B", 1).asInstanceOf[Literal]))
 
-    test("Testing removeSuperSets"){
+    test("Testing removeSuperSets") {
       assert(SAT4JSolver.removeSuperSets(models, models) ==
         Set(Set(Message("A", "B", 1)), Set(Node("A", 1))))
     }
   }
+
 
   def testconvertLitsToVecInt(): Unit = {
     //Helper method that adds 2 messages and 3 nodes to a clause which is in turn is added to a formula
@@ -127,12 +130,11 @@ class SAT4JSolverSuite extends FunSuite {
     //Has to be converted to Set since literals are unordered in the map. The important part is that
     //all nodes exist in the map and they have ids from 1 to 5.
     val expected = Set(1, 2, 3, 4, 5)
-    val res = SAT4JSolver.convertLitsToVecInt(literals).toArray.toSet
+    val res = SAT4JSolver.convertLitsToVecInt(formula, literals).toArray.toSet
 
-    test("Testing convertLitsToVecInt"){
+    test("Testing convertLitsToVecInt") {
       assert(res == expected)
     }
-
   }
 
   def testconvertLitsToNegatedVecInt(): Unit = {
@@ -143,32 +145,23 @@ class SAT4JSolverSuite extends FunSuite {
     //Has to be converted to Set since literals are unordered in the map. The important part is that
     //all nodes exist in the map and they have ids from 1 to 5.
     val expected = Set(-1, -2, -3, -4, -5)
-    val res = SAT4JSolver.convertLitsToNegatedVecInt(literals).toArray.toSet
+    val res = SAT4JSolver.convertLitsToNegatedVecInt(formula, literals).toArray.toSet
 
-    test("Testing convertLitsToNegatedVecInt"){
+    test("Testing convertLitsToNegatedVecInt") {
       assert(res == expected)
     }
-
   }
-
 
   //Helper method for convertLitsTo(Negated)VecInt
   def generateCNFFormula(): Formula = {
     val formula = new Formula
-    val clause = new Clause
-    val msgs = Set(Message("A", "B", 1),  Message("A", "C", 1))
+    val clause = new Clause(formula)
+    val msgs = Set(Message("A", "B", 1), Message("A", "C", 1))
     val nodes = Set(Node("A", 1), Node("B", 1), Node("C", 1))
     msgs.foreach(msg => clause.addLiteralToClause(msg))
     nodes.foreach(n => clause.addLiteralToClause(n))
     formula.addClause(clause)
     formula
   }
-
-
-
-
-
-
-
 
 }

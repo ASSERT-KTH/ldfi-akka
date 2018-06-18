@@ -1,15 +1,11 @@
-package Parser
-
-import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets
+package parser
 
 import ldfi.akka.booleanformulas.BooleanFormula._
-import ldfi.akka.evaluation.Controller
 import ldfi.akka.parser.AkkaParser
 import ldfi.akka.parser.AkkaParser.{FormattedLogs, Row}
 import org.scalatest.FunSuite
 
-import scala.io.{BufferedSource, Source}
+import scala.io.Source
 
 class AkkaParserSuite extends FunSuite {
 
@@ -20,7 +16,7 @@ class AkkaParserSuite extends FunSuite {
 
 
   def testAkkaParser(): Unit = {
-    val logs = Source.fromFile("src/test/scala/Parser/testLogs.log").mkString.split("\n\n")
+    val logs = Source.fromFile("src/test/scala/parser/testLogs.log").mkString.split("\n\n")
 
     //B receives from A, C receives from A
     logs.lift(0) match {

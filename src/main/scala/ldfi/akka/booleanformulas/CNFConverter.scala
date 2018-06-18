@@ -7,7 +7,7 @@ import ldfi.akka.parser.AkkaParser._
 object CNFConverter {
 
   def run(formattedLog: FormattedLogs, formula: Formula): Unit = {
-    val clause = new Clause
+    val clause = new Clause(formula)
     for (line <- formattedLog.rows){
       addRowToClause(clause, line)
     }

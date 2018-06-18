@@ -3,15 +3,18 @@ package ldfi.akka.booleanformulas
 
 object BooleanFormula {
 
-  //helper fields for later SAT-solving
-  var literalsToId : Map[Literal, Int] = Map.empty
-  var idToLiterals : Map[Int, Literal] = Map.empty
-  var firstMessageSent : Map[String, Int] = Map.empty
-  var activityTimeRange : Map[String, (Int, Int)] = Map.empty
-  var literalId = 1
-  var latestTime = 0
+
 
   class Formula  {
+
+    //helper fields for later SAT-solving
+    var literalsToId : Map[Literal, Int] = Map.empty
+    var idToLiterals : Map[Int, Literal] = Map.empty
+    var firstMessageSent : Map[String, Int] = Map.empty
+    var activityTimeRange : Map[String, (Int, Int)] = Map.empty
+    var literalId = 1
+    var latestTime = 0
+
     var clauses : List[Clause] = List.empty
 
     def addLiteralToFormula(literal: Literal): Unit = {
@@ -44,10 +47,10 @@ object BooleanFormula {
 
     def getLatestTime: Int = latestTime
 
-    def getActivityTimeRange(node: String): Option[(Int, Int)] = {
+    def getActivityTimeRange(node: String): (Int, Int) = {
       activityTimeRange.get(node) match {
-        case valu @ Some(value) => valu
-        case None => None
+        case Some(actRange) => actRange
+        case None => sys.error("Solver: Node doesn't have any activity. " + node)
       }
     }
 
@@ -75,8 +78,8 @@ object BooleanFormula {
         case n @ Node(id, time) => //DO NOTHING
         case m @ Message(sender, recipient, time) =>
           firstMessageSent.get(sender) match {
-            case Some(storedtime) if storedtime > time => firstMessageSent + (sender -> time)
-            case Some(storedtime) if storedtime <= time => // Do nothing
+            case Some(storedtime) if time > storedtime => firstMessageSent += (sender -> time)
+            case Some(storedtime) if time <= storedtime => // Do nothing
             case None => firstMessageSent += (sender -> time)
           }
       }
@@ -94,22 +97,23 @@ object BooleanFormula {
         activityTimeRange.get(node) match {
           case Some((firstTime, lastTime)) =>
             if(currTime < firstTime)
-              activityTimeRange + (node -> (currTime, lastTime))
+              activityTimeRange += (node -> (currTime, lastTime))
             if(currTime > lastTime)
-              activityTimeRange + (node -> (firstTime, lastTime))
+              activityTimeRange += (node -> (firstTime, currTime))
           case None =>
             activityTimeRange += (node -> (currTime, currTime))
+
         }
       }
     }
 
   }
 
-  class Clause extends Formula {
+  class Clause(formula: Formula) {
     var literals : List[Literal] = List.empty
 
     def addLiteralToClause(literal: Literal): Unit = {
-      addLiteralToFormula(literal)
+      formula.addLiteralToFormula(literal)
       literals = literal :: literals
     }
 

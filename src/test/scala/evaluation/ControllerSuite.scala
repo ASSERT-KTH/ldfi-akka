@@ -1,8 +1,8 @@
-package Controller
+package evaluation
 
 import ldfi.akka.booleanformulas.BooleanFormula._
-import org.scalatest.FunSuite
 import ldfi.akka.evaluation.Controller._
+import org.scalatest.FunSuite
 
 
 class ControllerSuite extends FunSuite {

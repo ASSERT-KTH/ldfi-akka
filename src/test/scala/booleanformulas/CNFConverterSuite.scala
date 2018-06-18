@@ -1,17 +1,9 @@
-package CNFConverter
+package booleanformulas
 
-
-import java.io.{BufferedWriter, FileWriter, PrintWriter}
-
-import org.sat4j.minisat.SolverFactory
-import org.sat4j.reader.DimacsReader
-import org.sat4j.specs.{IProblem, IVecInt}
 import ldfi.akka.booleanformulas.BooleanFormula._
 import ldfi.akka.booleanformulas._
 import ldfi.akka.parser.AkkaParser.Row
 import org.scalatest.FunSuite
-
-import scala.io.Source
 
 class CNFConverterSuite extends FunSuite {
 
@@ -23,13 +15,13 @@ class CNFConverterSuite extends FunSuite {
 
   def testaddLiteralsToClause(): Unit = {
     val formula = new Formula
-    val clause = new Clause
+    val clause = new Clause(formula)
     val row = Row("A", "B", 1)
     val msg = Message("A", "B", 1)
 
     CNFConverter.addRowToClause(clause, row)
     test("testing addLiteralToClause"){
-      assert(clause.literalExistsInFormula(msg))
+      assert(formula.literalExistsInFormula(msg))
     }
   }
 
