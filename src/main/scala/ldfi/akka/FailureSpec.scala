@@ -1,6 +1,6 @@
 package ldfi.akka
 
-import booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 
 case class FailureSpec(eot: Int,
                        eff: Int,

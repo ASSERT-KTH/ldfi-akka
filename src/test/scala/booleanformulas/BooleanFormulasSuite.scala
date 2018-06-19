@@ -1,10 +1,9 @@
 package booleanformulas
 
 import org.scalatest.{FunSuite, Matchers}
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 
 class BooleanFormulasSuite extends FunSuite with Matchers {
-
 
   test("Testing addclause"){
       val formula = new Formula

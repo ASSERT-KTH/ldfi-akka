@@ -1,6 +1,6 @@
 package parser
 
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.parser.AkkaParser
 import ldfi.akka.parser.AkkaParser.{FormattedLogs, Row}
 import org.scalatest.FunSuite
@@ -13,7 +13,6 @@ class AkkaParserSuite extends FunSuite {
   testparseRecipient()
   testAkkaParser()
   testmanageClock()
-
 
   def testAkkaParser(): Unit = {
     val logs = Source.fromFile("src/test/scala/parser/testLogs.log").mkString.split("\n\n")
@@ -113,22 +112,22 @@ class AkkaParserSuite extends FunSuite {
 
   def testmanageClock(): Unit = {
 
-    val inj1 = Set(Message("A", "C", 1).asInstanceOf[Literal])
+    val inj1 = List(Message("A", "C", 1))
     test("Assert that time does not tick when same injection sender and not injected") {
       assert(AkkaParser.manageClock("A", "B", "", "",  0, inj1) == 1)
     }
 
-    val inj2 = Set(Message("B", "A", 1).asInstanceOf[Literal])
+    val inj2 = List(Message("B", "A", 1))
     test("Assert that time ticks when not same injection sender") {
       assert(AkkaParser.manageClock("A", "B", "", "", 0, inj2) == 2)
     }
 
-    val inj3 = Set(Message("A", "B", 1).asInstanceOf[Literal])
+    val inj3 = List(Message("A", "B", 1))
     test("Assert that time ticks when same injection sender and injected") {
       assert(AkkaParser.manageClock("A", "B", "", "", 0, inj3) == 2)
     }
 
-    val inj4 = Set(Message("A", "B", 1).asInstanceOf[Literal], Message("B", "A", 2).asInstanceOf[Literal])
+    val inj4 = List(Message("A", "B", 1), Message("B", "A", 2))
     test("Assert that time ticks two steps when same injection and next senderinjector is different"){
       assert(AkkaParser.manageClock("A", "B", "", "", 0, inj4) == 3)
     }
@@ -152,6 +151,5 @@ class AkkaParserSuite extends FunSuite {
       assert(recipient == "C")
     }
   }
-
 
 }

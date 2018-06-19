@@ -1,6 +1,6 @@
 package ldfi.akka.booleanformulas
 
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.FailureSpec
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
@@ -61,7 +61,6 @@ object SAT4JSolver {
   }
 
   def convertLitsToVecInt(formula: Formula, literal: List[Literal]): VecInt = {
-
     val idList = literal.map(lit => formula.getLiteralId(lit))
     new VecInt(idList.toArray)
   }

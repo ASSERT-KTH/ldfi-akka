@@ -1,6 +1,6 @@
 package ldfi.akka.booleanformulas
 
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.parser.AkkaParser._
 
 

@@ -1,7 +1,7 @@
 package booleanformulas
 
 import ldfi.akka.FailureSpec
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.booleanformulas.SAT4JSolver
 import org.scalatest.FunSuite
 

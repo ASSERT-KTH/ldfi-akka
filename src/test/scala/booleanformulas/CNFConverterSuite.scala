@@ -1,13 +1,11 @@
 package booleanformulas
 
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.booleanformulas._
 import ldfi.akka.parser.AkkaParser.Row
 import org.scalatest.FunSuite
 
 class CNFConverterSuite extends FunSuite {
-
-
 
   testaddLiteralsToClause()
   testgetMessage()

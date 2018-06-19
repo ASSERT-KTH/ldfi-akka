@@ -1,9 +1,6 @@
 package ldfi.akka.parser
 
-import java.io.BufferedReader
-
-import ldfi.akka.booleanformulas.BooleanFormula.{Literal, Message}
-import scala.collection.mutable.HashSet
+import ldfi.akka.booleanformulas._
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
@@ -29,7 +26,7 @@ object AkkaParser {
     for (line <- filteredLines) {
       val (currentSender, currentRecipient) = (parseSender(line), parseRecipient(line))
       val time = manageClock(currentSender, currentRecipient, previousSender, previousRecipient,
-        Clock.getTime, injections)
+        Clock.getTime, injections.toList)
       Clock.setTime(time)
       previousSender = currentSender
       previousRecipient = currentRecipient
@@ -41,7 +38,7 @@ object AkkaParser {
   }
 
   def manageClock(curSen: String, curRec: String, prevSen: String, prevRec: String,
-                  curTime: Int, injections: Set[Literal]): Int = {
+                  curTime: Int, injections: List[Literal]): Int = {
     //if new sender, increment clock
     if(curSen != prevSen)
       manageClockHelper(curSen, curRec, curTime + 1, injections)
@@ -59,14 +56,14 @@ object AkkaParser {
       curTime
   }
 
-  def manageClockHelper(curSen: String, curRec: String, curTime: Int, injections: Set[Literal]): Int = {
+  def manageClockHelper(curSen: String, curRec: String, curTime: Int, injections: List[Literal]): Int = {
     if (shouldTick(curSen, curRec, curTime, injections))
       manageClockHelper(curSen, curRec, curTime + 1, injections)
     else
       curTime
   }
 
-  def shouldTick(curSen: String, curRec: String, curTime: Int, injections: Set[Literal]) : Boolean = {
+  def shouldTick(curSen: String, curRec: String, curTime: Int, injections: List[Literal]) : Boolean = {
     val currMsg = Message(curSen, curRec, curTime)
     val injectionsAtCurTime = injections.collect { case msg @ Message(_, _, t) if t == curTime => msg }
     val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
@@ -92,14 +89,6 @@ object AkkaParser {
     recipient
   }
   
-  def getAllNodes(format: FormattedLogs): HashSet[String] = {
-    var dict = HashSet[String]()
-    for (row <- format.rows) {
-      dict += row.sender
-      dict += row.recipient
-    }
-    dict
-  }
 
   def prettyPrintFormat(format: FormattedLogs): Unit = {
     println("----------------------")

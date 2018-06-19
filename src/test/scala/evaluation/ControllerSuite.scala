@@ -1,6 +1,6 @@
 package evaluation
 
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.evaluation.Controller._
 import org.scalatest.FunSuite
 

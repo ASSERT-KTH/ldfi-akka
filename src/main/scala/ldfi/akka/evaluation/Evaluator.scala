@@ -2,7 +2,7 @@ package ldfi.akka.evaluation
 
 import java.lang.reflect.InvocationTargetException
 
-import ldfi.akka.booleanformulas.BooleanFormula._
+import ldfi.akka.booleanformulas._
 import ldfi.akka.booleanformulas._
 import ldfi.akka.Main.Program
 import ldfi.akka.parser.AkkaParser
