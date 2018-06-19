@@ -6,16 +6,6 @@ import ldfi.akka.booleanformulas.BooleanFormula._
 class BooleanFormulasSuite extends FunSuite with Matchers {
 
 
-  val msg1 = Message("A", "B", 1)
-  val node1 = Node("A", 1)
-  val node2 = Node("B", 1)
-
-
-  val msg2 = Message("C", "D", 1)
-  val node3 = Node("C", 1)
-  val node4 = Node("D", 1)
-
-
   test("Testing addclause"){
       val formula = new Formula
       val clause = new Clause(formula)
@@ -24,11 +14,18 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     }
 
   test("Testing formula.getAllLiterals"){
+    val msg1 = Message("A", "B", 1)
+    val node1 = Node("A", 1)
+    val node2 = Node("B", 1)
+
+    val msg2 = Message("C", "D", 1)
+    val node3 = Node("C", 1)
+    val node4 = Node("D", 1)
+
     val (formula, _, _, _) = generateFormula()
 
     formula.getAllLiterals should be (Set(msg1, node1, node2, msg2, node3, node4))
   }
-
 
   test("Testing formula.getAllNodes"){
     val (formula, _, nodes, _) = generateFormula()
@@ -46,24 +43,23 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = Message("A", "B", 1)
+
     formula.addClause(clause)
     clause.addLiteralToClause(msg)
 
     formula.literalExistsInFormula(msg)
-
   }
-
 
   test("Testing formula.idExistsInLieteralsToId"){
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = Message("A", "B", 1)
+
     formula.addClause(clause)
     //Should have id 1
     clause.addLiteralToClause(msg)
 
     formula.idExistsInLiteralsToId(1)
-
   }
 
   test("Testing formula.litExistsInIdToLiterals"){
@@ -74,9 +70,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.addLiteralToClause(msg)
 
     formula.litExistsInIdToLiterals(msg)
-
   }
-
 
   test("Testing formula.getLitIdCnt") {
     val formula = new Formula
@@ -87,11 +81,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
 
     //since only one lit, next litidcnt should be 2
     formula.getLitIdCnt should be (2)
-
   }
-
-
-
 
   test("Testing formula.getLatestTime") {
     val formula = new Formula
@@ -118,10 +108,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.addLiteralToClause(act2)
 
     formula.getActivityTimeRange("A") should be ((1, 2))
-
-
   }
-
 
   test("Testing formula.getLiteralId"){
     val formula = new Formula
@@ -131,9 +118,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.addLiteralToClause(msg)
     formula.addClause(clause)
     formula.getLiteralId(msg) should be (1)
-
   }
-
 
   test("Testing formula.updateActivityMap") {
     val formula = new Formula
@@ -144,24 +129,76 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     formula.activityTimeRange should contain allOf ("A" -> (1, 1), "B" -> (1, 1))
   }
 
-
   test("Testing formula.updateSenderTime"){
     val formula = new Formula
     val msg1 = Message("A", "B", 1)
     val msg2 = Message("A", "B", 2)
-
 
     formula.updateSenderTime(msg1)
     formula.firstMessageSent.get("A") should be (Some(1))
 
     formula.updateSenderTime(msg2)
     formula.firstMessageSent.get("A") should be (Some(2))
-
-
-
   }
 
+  test("Testing clause.addLiteralToClause"){
+    val formula = new Formula
+    val clause = new Clause(formula)
+    val msg = Message("A", "B", 1)
+
+    clause.addLiteralToClause(msg)
+
+    clause.literals should contain (msg)
+  }
+
+  test("Testing clause.getMessageInClause"){
+    val formula = new Formula
+    val clause = new Clause(formula)
+    val msg = Message("A", "B", 1)
+    val act = Node("A", 1)
+
+    clause.addLiteralToClause(msg)
+    clause.addLiteralToClause(act)
+
+    clause.getMessagesInClause should contain only msg
+  }
+
+  test("Testing clause.getLiteralInClause"){
+    val formula = new Formula
+    val clause = new Clause(formula)
+    val msg = Message("A", "B", 1)
+    val node = Node("A", 1)
+
+    clause.addLiteralToClause(msg)
+    clause.addLiteralToClause(node)
+
+    clause.getNodesInClause should contain only node
+  }
+
+  test("Testing clause.literalExistsInClause"){
+    val formula = new Formula
+    val clause = new Clause(formula)
+    val msg = Message("A", "B", 1)
+    val node = Node("A", 1)
+
+    clause.addLiteralToClause(msg)
+    clause.addLiteralToClause(node)
+
+    clause.literalExistsInClause(msg)
+  }
+
+  //helper function
   def generateFormula(): (Formula, List[Clause], List[Node], List[Message]) = {
+
+    val msg1 = Message("A", "B", 1)
+    val node1 = Node("A", 1)
+    val node2 = Node("B", 1)
+
+
+    val msg2 = Message("C", "D", 1)
+    val node3 = Node("C", 1)
+    val node4 = Node("D", 1)
+
     val formula = new Formula
     val c1 = new Clause(formula)
     val c2 = new Clause(formula)
@@ -179,10 +216,6 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
 
     (formula, List(c1, c2), List(node1, node2, node3, node4), List(msg1, msg2))
 
-
   }
-
-
-
 
 }
