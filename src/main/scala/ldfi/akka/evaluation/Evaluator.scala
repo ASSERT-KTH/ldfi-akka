@@ -7,7 +7,9 @@ import ldfi.akka.booleanformulas._
 import ldfi.akka.Main.Program
 import ldfi.akka.parser.AkkaParser
 import ldfi.akka.FailureSpec
+import ldfi.akka.parser.AkkaParser.FormattedLogs
 
+import scala.collection.immutable.{SortedSet, TreeSet}
 import scala.io.Source
 
 object Evaluator {
@@ -30,6 +32,9 @@ object Evaluator {
     val format = AkkaParser.parse(input, Set.empty)
     //Convert the formattedlogs to CNF formula
     CNFConverter.run(format, formula)
+
+    val initSchedule = getInitialScheduling(format)
+    Controller.setInitialScheduling(initSchedule)
 
 
     /************************************************
@@ -134,5 +139,12 @@ object Evaluator {
       print("\nFailure Specification: " + elem._2)
     )
   }
+
+  def getInitialScheduling(formattedLogs: FormattedLogs): Set[Message] = {
+    formattedLogs.rows
+      .map(row => Message(row.sender, row.recipient, row.time))
+      .to[Set]
+  }
+
 
 }
