@@ -6,6 +6,7 @@ import scala.collection.{mutable, _}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import akka.event._
+import akka.actor.ActorLogging
 import akka.testkit.CallingThreadDispatcher
 import ldfi.akka.evaluation.Controller
 
