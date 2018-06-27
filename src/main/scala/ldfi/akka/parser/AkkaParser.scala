@@ -76,19 +76,18 @@ object AkkaParser {
   }
 
   def parseSender(line: String): String = {
-    val pattern = """(?<=\[akka://system/user/)(.+)(?=#)""".r
+    val pattern = """(?<=\[akka:)(.+)(?=#)""".r
     var sender = ""
     pattern.findAllIn(line).matchData foreach { m => sender = m.group(0) }
-    sender
+    sender.split("/").last
   }
 
   def parseRecipient(line: String): String = {
-    val pattern = """(?<=akka://system/user/)(.+)(?=-received)""".r
+    val pattern = """(?<=akka:)(.+)(?=-received)""".r
     var recipient = ""
     pattern.findAllIn(line).matchData foreach { m => recipient = m.group(0); }
-    recipient
+    recipient.split("/").last
   }
-  
 
   def prettyPrintFormat(format: FormattedLogs): Unit = {
     println("----------------------")

@@ -1,14 +1,14 @@
 package ldfi.akka.evaluation
 
+import java.io.PrintWriter
+import scala.io.Source
 import java.lang.reflect.InvocationTargetException
 
-import ldfi.akka.booleanformulas._
 import ldfi.akka.booleanformulas._
 import ldfi.akka.Main.Program
 import ldfi.akka.parser.AkkaParser
 import ldfi.akka.FailureSpec
 
-import scala.io.Source
 
 object Evaluator {
 
@@ -83,12 +83,17 @@ object Evaluator {
   }
 
   def forwardStep(program: Program, hypothesis: Set[Literal]): Boolean = {
+
     //Reset old info in Controller
     Controller.reset()
     //set controller injections
     Controller.setInjections(hypothesis)
 
-    val freshInst = program.verifyClass.newInstance()
+    //clear the logs for each run
+    new PrintWriter("logs.log") {
+      write("")
+      close()
+    }
 
     //Invoke the main method
     try {
@@ -101,18 +106,26 @@ object Evaluator {
     //Invoke the verify method
     val correctness = try {
       program.verifyMethod.setAccessible(true)
-      program.verifyMethod.invoke(freshInst).asInstanceOf[Boolean]
+
+      //We only create new instance if veryify method is not in the main class
+      if(program.verifyClass != program.mainClass){
+        val freshInst = program.verifyClass.newInstance()
+        program.verifyMethod.invoke(freshInst).asInstanceOf[Boolean]
+      }
+      else{
+        program.verifyMethod.invoke(program.verifyClass).asInstanceOf[Boolean]
+      }
+
     } catch {
-      case e: InvocationTargetException => sys.error("Invocation of verify method failed. " + e.getCause.getMessage)
+      case ite: InvocationTargetException => sys.error("Invocation of verify method failed. " + ite.getCause.getMessage)
       case cce: ClassCastException => sys.error("Cast ver method ret type to boolean fail. " + cce.getCause.getMessage)
     }
-
+    //return the correctness of the run
     correctness
-
   }
 
   def backwardStep(failureSpec: FailureSpec): Set[Set[Literal]] = {
-    //Format the program and convert it to CNF
+    //Parse and format the program
     val format = AkkaParser.parse(input, Set.empty)
 
     //Convert the formattedlogs to CNF formula

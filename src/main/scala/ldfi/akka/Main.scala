@@ -57,7 +57,14 @@ object Main {
 
   def startEval(mainClass: File, verifyClass: File, verMeth: String): Unit = {
     //create logs.log
-    new PrintWriter("logs.log") {write("");close()}
+    val log = new File("ldfi-akka/logs.log")
+    log.createNewFile()
+
+    //clear it
+    new PrintWriter("logs.log") {
+      write("")
+      close()
+    }
 
     val (mainCls, mainMeth) = reflectClass(mainClass, "main")
     val (verifyCls, verifyMeth) = reflectClass(verifyClass, verMeth)
