@@ -37,19 +37,16 @@ object CNFConverter {
   def getMessage(line: Row): Message = Message(line.sender, line.recipient, line.time)
 
   def prettyPrintClause(clause: Clause): Unit = {
-    val msgs = clause.getMessagesInClause
-    val nodes = clause.getNodesInClause
-
-    val prettyMsgs = (for (msg <- msgs) yield
-      "M(" + msg.sender + ", " + msg.recipient + ", " + msg.time + ")" + " V ").mkString
-
-    val prettyNodes = (for ((node, count) <- nodes.zipWithIndex) yield {
-        if(count < nodes.size - 1) "P(" + node.node + ", " + node.time + ")" + " V "
-        else "P(" + node.node + ", " + node.time + ")"
-    }).mkString
-
-    val prettyClause = prettyMsgs + prettyNodes
-    print(prettyClause)
+    for((literal, cnt) <- clause.literals.zipWithIndex){
+      literal match {
+        case Node(node, time) => print("P(" + node + ", " + time + ")")
+        case Message(sender, recipient, time) => print("M(" + sender + ", " + recipient + ", " + time + ")")
+        case _ => println("ERROR in CNFConverter.prettyPrintClause: literal not Node or Message!")
+      }
+      if(cnt != clause.literals.size - 1){
+        print(" V ")
+      }
+    }
   }
 
   def prettyPrintFormula(formula: Formula): Unit = {

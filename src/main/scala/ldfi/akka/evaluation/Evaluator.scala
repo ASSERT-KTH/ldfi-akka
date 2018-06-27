@@ -1,7 +1,6 @@
 package ldfi.akka.evaluation
 
 import java.io.PrintWriter
-import scala.io.Source
 import java.lang.reflect.InvocationTargetException
 
 import ldfi.akka.booleanformulas._
@@ -9,6 +8,7 @@ import ldfi.akka.Main.Program
 import ldfi.akka.parser.AkkaParser
 import ldfi.akka.FailureSpec
 
+import scala.io.Source
 
 object Evaluator {
 
@@ -22,14 +22,18 @@ object Evaluator {
     /************************************************
     Obtain a failure-free outcome of the program
       ************************************************/
+
+    val tempFormula = new Formula
     val correctness = forwardStep(prog, Set.empty)
+    val input : Source = Source.fromFile("ldfi-akka/logs.log")
+
     if (!correctness) {
       sys.error("Forwardstep: program: " + prog + ", does not work even with no failure injections.")
     }
     //Format the program and convert it to CNF
     val format = AkkaParser.parse(input, Set.empty)
     //Convert the formattedlogs to CNF formula
-    CNFConverter.run(format, formula)
+    CNFConverter.run(format, tempFormula)
 
 
     /************************************************
@@ -37,11 +41,11 @@ object Evaluator {
       ************************************************/
     //Initial failurespec from failure-free program
     val initFailureSpec = FailureSpec(
-      eot = formula.getLatestTime + 1,
+      eot = tempFormula.getLatestTime + 1,
       eff = 2,
       maxCrashes = 0,
-      nodes = formula.getAllNodes.toSet,
-      messages = formula.getAllMessages.toSet,
+      nodes = tempFormula.getAllNodes.toSet,
+      messages = tempFormula.getAllMessages.toSet,
       crashes = Set.empty,
       cuts = Set.empty)
 
@@ -78,8 +82,6 @@ object Evaluator {
         solToFSpec += (hypothesis -> failureSpec)
       }
     }
-
-
   }
 
   def forwardStep(program: Program, hypothesis: Set[Literal]): Boolean = {
