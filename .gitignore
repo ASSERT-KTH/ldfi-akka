@@ -1,4 +1,5 @@
 *.log
+!/src/test/scala/parser/testLogs.log
 *.txt
 
 

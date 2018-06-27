@@ -7,11 +7,29 @@ import scala.meta._
 final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(index, "Ldfiakka_v1_0") {
   override def fix(ctx: RuleCtx): Patch = {
     //debugRules(ctx)
-    importAkkaEvent(ctx) + importDispatcher(ctx) + importController(ctx) +
+    importAkkaEvent(ctx) + importDispatcher(ctx) + importController(ctx) + importActorLogging(ctx) +
       addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) +
       addControllerGreenLight(ctx) + addDispatcherToProps(ctx)
   }
 
+
+  //import akka.actor.ActorLogging
+  def importActorLogging(ctx: RuleCtx): Patch = {
+    val importee = Importee.Name(Name.Indeterminate("ActorLogging"))
+    val importer = Importer(Term.Name("akka.actor"), List(importee))
+
+    //only import controller to files containing actor classes
+    val actorClasses = ctx.tree.collect {
+      case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
+        parent
+    }.nonEmpty
+
+    if(actorClasses)
+      ctx.addGlobalImport(importer)
+    else
+      Patch.empty
+
+  }
 
   //import akka.event._
   def importAkkaEvent(ctx: RuleCtx): Patch = {
