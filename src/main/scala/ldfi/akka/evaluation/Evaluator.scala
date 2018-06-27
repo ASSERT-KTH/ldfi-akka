@@ -13,7 +13,7 @@ import ldfi.akka.FailureSpec
 object Evaluator {
 
   //This can be changed
-  val input : Source = Source.fromFile("logs.log")
+  val input : Source = Source.fromFile("ldfi-akka/logs.log")
   val formula = new Formula
   var solToFSpec : Map[Set[Literal], FailureSpec] = Map.empty
 
@@ -90,7 +90,7 @@ object Evaluator {
     Controller.setInjections(hypothesis)
 
     //clear the logs for each run
-    new PrintWriter("logs.log") {
+    new PrintWriter("ldfi-akka/logs.log") {
       write("")
       close()
     }

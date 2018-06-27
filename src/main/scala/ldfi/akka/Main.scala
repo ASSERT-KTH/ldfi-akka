@@ -56,12 +56,12 @@ object Main {
   }
 
   def startEval(mainClass: File, verifyClass: File, verMeth: String): Unit = {
-    //create logs.log
+    //create log file
     val log = new File("ldfi-akka/logs.log")
     log.createNewFile()
 
     //clear it
-    new PrintWriter("logs.log") {
+    new PrintWriter("ldfi-akka/logs.log") {
       write("")
       close()
     }
