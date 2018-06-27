@@ -14,7 +14,6 @@ object Controller {
   private var infoHolder: ControllerInfoHolder = new ControllerInfoHolder
 
   //Behöver något som säger att ActorSystemet är klart
-
   def dispatchQueue(queue: ConcurrentLinkedQueue[Envelope],
                     scheduleMap: Map[Message, Int],
                     forcedSchedule: mutable.Queue[SuperEnvelope],
@@ -107,13 +106,13 @@ object Controller {
 
   def setInitialScheduling(initSched: Set[Message]): Unit = {
     //Make position map out of initial schedule
-    val initSchedMap = getScheduleMap(initSched, 1)
+    val initSchedMap = getScheduleMap(initSched.toList, 1)
     infoHolder.setInitialScheduleMap(initSchedMap)
   }
 
-  def getScheduleMap(initSched: Set[Message], cnt: Int): Map[Message, Int] = initSched.size match {
-    case 0 => Map()
-    case _ => Map(initSched.head -> cnt) ++ getScheduleMap(initSched.tail, cnt + 1)
+  def getScheduleMap(initSched: List[Message], cnt: Int): Map[Message, Int] = initSched match {
+    case Nil => Map()
+    case head :: tail => Map(head -> cnt) ++ getScheduleMap(tail, cnt + 1)
   }
 
   final case class SuperEnvelope(message: Message, handle: Envelope)

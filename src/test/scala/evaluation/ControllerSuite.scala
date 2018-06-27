@@ -85,10 +85,16 @@ class ControllerSuite extends FunSuite with Matchers {
 
     //convert java collections to scala collections, since no structural equality in Java
     queue.asScala.toSet should be (resultingQueue.asScala.toSet)
-
-
   }
 
+  test ("Testing Controller.getScheduleMap") {
+    val msg1 = Message("A", "B", 1)
+    val msg2 = Message("A", "C", 1)
+    val msg3 = Message("A", "D", 2)
 
+    val msgs = List(msg1, msg2, msg3)
+
+    getScheduleMap(msgs, 1) shouldBe Map(msg1 -> 1, msg2 -> 2, msg3 -> 3)
+  }
 
 }
