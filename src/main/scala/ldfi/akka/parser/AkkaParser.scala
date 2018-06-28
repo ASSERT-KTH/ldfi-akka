@@ -15,7 +15,7 @@ object AkkaParser {
     def reset(): Unit = time = 0
   }
 
-  def parse(input: Source, injections: Set[Literal]): FormattedLogs = {
+  def parse(input: Source, injections: Set[Literal], freepassMsgs: List[String]): FormattedLogs = {
     Clock.reset()
     var formattedLogs = ListBuffer[Row]()
     var previousSender, previousRecipient =  ""
@@ -24,13 +24,18 @@ object AkkaParser {
       map(x => x.replaceAll("\\s", ""))
 
     for (line <- filteredLines) {
-      val (currentSender, currentRecipient) = (parseSender(line), parseRecipient(line))
-      val time = manageClock(currentSender, currentRecipient, previousSender, previousRecipient,
-        Clock.getTime, injections.toList)
-      Clock.setTime(time)
-      previousSender = currentSender
-      previousRecipient = currentRecipient
-      formattedLogs += Row(currentSender, currentRecipient, time)
+      val (currentSender, currentRecipient, message) = (parseSender(line), parseRecipient(line), parseMessage(line))
+
+      //only add messages that are part of the analysis
+      if(!freepassMsgs.contains(message)){
+        val time = manageClock(currentSender, currentRecipient, previousSender, previousRecipient,
+          Clock.getTime, injections.toList)
+        Clock.setTime(time)
+        previousSender = currentSender
+        previousRecipient = currentRecipient
+        formattedLogs += Row(currentSender, currentRecipient, time)
+      }
+
     }
 
     val format = FormattedLogs(formattedLogs.toList)
@@ -87,6 +92,14 @@ object AkkaParser {
     var recipient = ""
     pattern.findAllIn(line).matchData foreach { m => recipient = m.group(0); }
     recipient.split("/").last
+  }
+
+  def parseMessage(line: String): String = {
+    val pattern = """(?<=message)(.+)(?=from)""".r
+    pattern.findFirstIn(line) match {
+      case Some(message) => message
+      case None => sys.error("Error: AkkaParser.parseMessage could not match any message")
+    }
   }
 
   def prettyPrintFormat(format: FormattedLogs): Unit = {

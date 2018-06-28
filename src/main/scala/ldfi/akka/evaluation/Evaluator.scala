@@ -12,9 +12,6 @@ import scala.io.Source
 
 object Evaluator {
 
-  //This can be changed
-  val input : Source = Source.fromFile("ldfi-akka/logs.log")
-  val formula = new Formula
   var solToFSpec : Map[Set[Literal], FailureSpec] = Map.empty
 
   def evaluate(prog: Program): Unit = {
@@ -31,7 +28,7 @@ object Evaluator {
       sys.error("Forwardstep: program: " + prog + ", does not work even with no failure injections.")
     }
     //Format the program and convert it to CNF
-    val format = AkkaParser.parse(input, Set.empty)
+    val format = AkkaParser.parse(input, Set.empty, List.empty)
     //Convert the formattedlogs to CNF formula
     CNFConverter.run(format, tempFormula)
 
@@ -49,13 +46,15 @@ object Evaluator {
       crashes = Set.empty,
       cuts = Set.empty)
 
+    val formula = new Formula
+
     //start evaluator with init failure spec and empty hypothesis
-    evaluator(initFailureSpec, Set.empty)
+    evaluator(formula, initFailureSpec, Set.empty)
 
     //Print Failure Injections
     prettyPrintFailureSpecs()
 
-    def evaluator(failureSpec: FailureSpec, hypothesis: Set[Literal]): Unit = {
+    def evaluator(formula: Formula, failureSpec: FailureSpec, hypothesis: Set[Literal]): Unit = {
 
       println("\n\n**********************************************************************\n" +
         "New run with following injection hypothesis: " + hypothesis + "\n" +
@@ -72,10 +71,10 @@ object Evaluator {
           failureSpec.copy(cuts = failureSpec.cuts ++ hypcuts, crashes = failureSpec.crashes ++ hypcrashes)
 
         //perform the backward step to obtain the new CNF formula
-        val newHypotheses = backwardStep(updatedFailureSpec)
+        val newHypotheses = backwardStep(formula, updatedFailureSpec)
 
         //call evaluator recursively for every hypothesis
-        newHypotheses.foreach(hypo => evaluator(updatedFailureSpec, hypo))
+        newHypotheses.foreach(hypo => evaluator(formula, updatedFailureSpec, hypo))
       }
       //hypothesis is real solution
       else{
@@ -126,9 +125,10 @@ object Evaluator {
     correctness
   }
 
-  def backwardStep(failureSpec: FailureSpec): Set[Set[Literal]] = {
+  def backwardStep(formula: Formula, failureSpec: FailureSpec): Set[Set[Literal]] = {
     //Parse and format the program
-    val format = AkkaParser.parse(input, Set.empty)
+    val input : Source = Source.fromFile("ldfi-akka/logs.log")
+    val format = AkkaParser.parse(input, Set.empty, List.empty)
 
     //Convert the formattedlogs to CNF formula
     CNFConverter.run(format, formula)
