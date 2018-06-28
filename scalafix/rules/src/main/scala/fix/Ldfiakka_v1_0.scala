@@ -13,12 +13,14 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
 
-  //import akka.actor.ActorLogging
-  def importActorLogging(ctx: RuleCtx): Patch = {
-    val importee = Importee.Name(Name.Indeterminate("ActorLogging"))
-    val importer = Importer(Term.Name("akka.actor"), List(importee))
 
-    //only import controller to files containing actor classes
+
+  def addImportsForActorClass(importee: Importee, importer: Importer, ctx: RuleCtx): Patch = {
+
+    //Currently defaulting to adding imports everywhere
+    //TODO: Find better way of checking whether class is an actor class
+
+    //only import to files containing actor classes
     val actorClasses = ctx.tree.collect {
       case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
         parent
@@ -27,8 +29,16 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     if(actorClasses)
       ctx.addGlobalImport(importer)
     else
-      Patch.empty
+    //Patch.empty
+      ctx.addGlobalImport(importer)
+  }
 
+  //import akka.actor.ActorLogging
+  def importActorLogging(ctx: RuleCtx): Patch = {
+    val importee = Importee.Name(Name.Indeterminate("ActorLogging"))
+    val importer = Importer(Term.Name("akka.actor"), List(importee))
+
+    addImportsForActorClass(importee, importer, ctx)
   }
 
   //import akka.event._
@@ -36,16 +46,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     val importee = Importee.Name(Name.Indeterminate("event._"))
     val importer = Importer(Term.Name("akka"), List(importee))
 
-    //only import controller to files containing actor classes
-    val actorClasses = ctx.tree.collect {
-      case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
-        parent
-    }.nonEmpty
-
-    if(actorClasses)
-      ctx.addGlobalImport(importer)
-    else
-      Patch.empty
+    addImportsForActorClass(importee, importer, ctx)
   }
 
   //import ldfi.akka.Controller
@@ -53,16 +54,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     val importee = Importee.Name(Name.Indeterminate("Controller"))
     val importer = Importer(Term.Name("ldfi.akka.evaluation"), List(importee))
 
-    //only import controller to files containing actor classes
-    val actorClasses = ctx.tree.collect {
-      case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
-        parent
-    }.nonEmpty
-
-    if(actorClasses)
-      ctx.addGlobalImport(importer)
-    else
-      Patch.empty
+    addImportsForActorClass(importee, importer, ctx)
   }
 
   //import akka.testkit.CallingThreadDispatcher
@@ -70,16 +62,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     val importee = Importee.Name(Name.Indeterminate("CallingThreadDispatcher"))
     val importer = Importer(Term.Name("akka.testkit"), List(importee))
 
-    //only import dispatcher to files containing actor classes
-    val actorClasses = ctx.tree.collect {
-      case parent @ Defn.Class(_, _, _, _, template) if isExtendedWithActor(template.inits) =>
-        parent
-    }.nonEmpty
-
-    if(actorClasses)
-      ctx.addGlobalImport(importer)
-    else
-      Patch.empty
+    addImportsForActorClass(importee, importer, ctx)
   }
 
   //class _ extends Actor => class _ extends Actor with ActorLogging
@@ -155,10 +138,11 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def hasGreenLight(stats: List[Stat]): Boolean = {
-    stats.exists {s => s.collect {
-      case select @ Term.Select(Term.Name(fst), Term.Name(snd)) if fst == "Controller" && snd == "greenLight" =>
-        select
-    }.nonEmpty
+    stats.exists { s =>
+      s.collect {
+        case select @ Term.Select(Term.Name(fst), Term.Name(snd)) if fst == "Controller" && snd == "greenLight" =>
+          select
+      }.nonEmpty
     }
   }
 
@@ -193,7 +177,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   def isActorClassWithNoLogging(templ: Template): Boolean =
     (isExtendedWithActor(templ.inits) && !isExtendedWithActorLogging(templ.inits))
 
-  def isExtendedWithActor(inits: List[Init]): Boolean = inits.exists(i => i.tpe.toString() == "Actor")
+  def isExtendedWithActor(inits: List[Init]): Boolean = inits.exists(i => i.tpe.toString().contains("Actor"))
 
   def isExtendedWithActorLogging(inits: List[Init]): Boolean = inits.exists(i => i.tpe.toString() == "ActorLogging")
 
