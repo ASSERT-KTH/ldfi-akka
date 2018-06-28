@@ -17,7 +17,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
 
   def addImportsForActorClass(importee: Importee, importer: Importer, ctx: RuleCtx): Patch = {
 
-    //Currently defaulting to adding imports everywhere
+    //Currently defaulting to not adding defaults
     //TODO: Find better way of checking whether class is an actor class
 
     //only import to files containing actor classes
@@ -29,8 +29,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     if(actorClasses)
       ctx.addGlobalImport(importer)
     else
-    //Patch.empty
-      ctx.addGlobalImport(importer)
+      Patch.empty
+      //ctx.addGlobalImport(importer)
   }
 
   //import akka.actor.ActorLogging
@@ -82,8 +82,11 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   //def receive = {...} => def receive = LoggingReceive = {...}
   def addLoggingReceive (ctx: RuleCtx): Patch = {
     ctx.tree.collect {
-      case t @ Defn.Def(_, name, _, _, _, body) if name.value == "receive" && !hasLoggingReceive(body) =>
+      case fn @ Defn.Def(_, name, _, _, tpe, body)
+        if (name.value == "receive" || tpe.toString == "Receive") && !hasLoggingReceive(body) =>
         ctx.addLeft(body, "LoggingReceive ")
+      case valu @ Defn.Val(_, _ , tpe, body) if tpe.toString == "Receive" =>
+        ctx.addLeft(body, "LoggingReceive")
       case _ => Patch.empty
     }.asPatch
   }
@@ -185,6 +188,11 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     ctx.debugIndex()
     println(s"Tree.syntax: " + ctx.tree.syntax)
     println(s"Tree.structure: " + ctx.tree.structure)
+  }
+
+  def hasReceiveType(defn: Defn): Boolean = {
+
+
   }
 
 }
