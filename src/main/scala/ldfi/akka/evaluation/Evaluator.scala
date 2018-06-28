@@ -145,9 +145,12 @@ object Evaluator {
       "********************************************************\n" +
       "**************** FAILURE SPECIFICATIONS ****************\n" +
       "********************************************************")
-    solToFSpec.foreach( elem =>
-      print("\nFailure Specification: " + elem._2)
-    )
+    solToFSpec.foreach { elem =>
+      val fSpec = elem._2
+      print("\nFailure injection: " + elem._1 + " with failure specification: <" + fSpec.eot + "," + fSpec.eff + "," +
+        fSpec.maxCrashes + "> violated the correctness specification")
+    }
+
   }
 
 }
