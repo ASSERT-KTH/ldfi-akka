@@ -18,7 +18,7 @@ object Controller {
 
   }
 
-  def greenLight(sender: ActorRef, recipient: ActorRef, message: String): Boolean = {
+  def greenLight(sender: ActorRef, recipient: ActorRef, message: Any): Boolean = {
     val sndname = sender.path.name
     val rcpname = recipient.path.name
     val time = manageClock(sndname, rcpname)
@@ -28,8 +28,8 @@ object Controller {
     greenLight
   }
 
-  def isInjected(sen: String, rec: String, injections: Set[Literal], time: Int, message: String): Boolean = {
-    val msg = MessageLit(sen, rec, time, message)
+  def isInjected(sen: String, rec: String, injections: Set[Literal], time: Int, message: Any): Boolean = {
+    val msg = MessageLit(sen, rec, time, message.toString)
     val msgcut = injections.contains(msg)
 
     //nodes crashes if current time is greater or equal to injection time
