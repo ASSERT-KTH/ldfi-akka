@@ -15,19 +15,20 @@ object AkkaParser {
     def reset(): Unit = time = 0
   }
 
-  def parse(input: Source, injections: Set[Literal], freepassMsgs: List[String]): FormattedLogs = {
+  def parse(input: Source, injections: Set[Literal], freePassMsgs: List[String]): FormattedLogs = {
     Clock.reset()
     var formattedLogs = ListBuffer[Row]()
     var previousSender, previousRecipient =  ""
-    val filteredLines = input.getLines.
-      filter(x => x.contains("received") && !x.contains("deadLetters")).
-      map(x => x.replaceAll("\\s", ""))
+    val filteredLines = input.getLines
+      .filter(x => x.contains("received handled message"))
+      .map(x => x.replaceAll("\\s", ""))
 
     for (line <- filteredLines) {
       val (currentSender, currentRecipient, message) = (parseSender(line), parseRecipient(line), parseMessage(line))
+      val isNotFreePass = freePassMsgs.forall(freePassMessage => !message.contains(freePassMessage))
 
       //only add messages that are part of the analysis
-      if(!freepassMsgs.contains(message)){
+      if(isNotFreePass){
         val time = manageClock(currentSender, currentRecipient, previousSender, previousRecipient,
           Clock.getTime, injections.toList)
         Clock.setTime(time)
@@ -35,9 +36,7 @@ object AkkaParser {
         previousRecipient = currentRecipient
         formattedLogs += Row(currentSender, currentRecipient, time)
       }
-
     }
-
     val format = FormattedLogs(formattedLogs.toList)
     format
   }
@@ -81,10 +80,14 @@ object AkkaParser {
   }
 
   def parseSender(line: String): String = {
-    val pattern = """(?<=\[akka:)(.+)(?=#)""".r
+    val pattern = """(?<=fromActor\[)(.+)(?=])""".r
     var sender = ""
     pattern.findAllIn(line).matchData foreach { m => sender = m.group(0) }
-    sender.split("/").last
+    sender = sender.split("/").last
+    if(sender.contains("#")){
+      sender = sender.split("#").toList.head
+    }
+    sender
   }
 
   def parseRecipient(line: String): String = {
@@ -115,9 +118,3 @@ object AkkaParser {
   case class Row(sender: String, recipient: String, time: Int)
 
 }
-
-
-
-
-
-

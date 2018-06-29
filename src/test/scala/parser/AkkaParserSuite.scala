@@ -21,7 +21,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(0) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set.empty, List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set.empty, List("Start"))
         test("Testing AkkaParser, two messages sent with no injections") {
           assert(res == FormattedLogs(List(Row("A", "B", 1), Row("A", "C", 1))))
         }
@@ -32,7 +32,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(1) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "C", 1)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "C", 1)), List("Start"))
         test("Testing AkkaParser, two messages sent with single injection at time 1") {
           assert(res == FormattedLogs(List(Row("A", "B", 1))))
         }
@@ -43,7 +43,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(1) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
         test("Testing AkkaParser, one messages sent with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "B", 3))))
         }
@@ -54,7 +54,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(2) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
         test("Testing AkkaParser, two same messages sent with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "C", 3))))
         }
@@ -65,7 +65,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(3) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
         test("Testing AkkaParser, two diff messages sent with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "B", 3))))
         }
@@ -76,7 +76,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(4) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
         test("Testing AkkaParser, different senders sent with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "C", 1), Row("C", "B", 3))))
         }
@@ -87,7 +87,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(5) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
         test("Testing AkkaParser, different senders sent multiple messages " +
           "with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "D", 1), Row("C", "B", 3))))
@@ -99,7 +99,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(6) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List.empty)
+        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
         test("Testing AkkaParser, same sender sent multiple messages " +
           "with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "D", 1), Row("A", "B", 3))))
