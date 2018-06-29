@@ -8,7 +8,10 @@ import evaluation.Evaluator
 
 import sys.process._
 import java.lang.reflect.Method
+
 import org.apache.commons.io.FileUtils
+
+import scala.io.Source
 
 object Main {
 
@@ -66,12 +69,20 @@ object Main {
       close()
     }
 
+    val freePassMessages = try {
+      Source.fromFile("freePassMessages.txt").getLines().toList
+    }
+    catch {
+      case Exception => sys.error("Exception when reading from freePassMessages.txt. " +
+        "If there are no free pass messages, create an empty freePassMessages.txt in root directory.")
+    }
+
     val (mainCls, mainMeth) = reflectClass(mainClass, "main")
     val (verifyCls, verifyMeth) = reflectClass(verifyClass, verMeth)
 
     val program = Program(mainCls, mainMeth, verifyCls, verifyMeth)
 
-    Evaluator.evaluate(program)
+    Evaluator.evaluate(program, freePassMessages)
 
   }
 
