@@ -18,13 +18,12 @@ object Controller {
 
   }
 
-  def greenLight(sender: ActorRef, recipient: ActorRef, message: Any): Boolean = {
-    val sndname = sender.path.name
-    val rcpname = recipient.path.name
-    val time = manageClock(sndname, rcpname)
+  def greenLight(sender: String, recipient: String, message: Any): Boolean = {
+
+    val time = manageClock(sender, recipient)
 
     //we do not give greenLight if message is cut or node is crashed
-    val greenLight = !isInjected(sndname, rcpname, injections, time, message)
+    val greenLight = !isInjected(sender, recipient, injections, time, message)
     greenLight
   }
 

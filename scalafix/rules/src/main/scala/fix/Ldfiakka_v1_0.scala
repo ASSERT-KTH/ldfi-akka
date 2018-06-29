@@ -96,7 +96,16 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
         for(stat <- stats){
           stat.collect  {
             case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
-              val newIfTree = getIfTerm(lhs, op, args)
+              val newIfTree = getIfTerm(lhs, op, args, "self")
+              patch += ctx.replaceTree(appInf, newIfTree.toString)
+            case _ => Patch.empty
+          }
+        }
+      case templ @ Template (_, inits, _, stats) if !hasGreenLight(stats) =>
+        for(stat <- stats){
+          stat.collect  {
+            case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
+              val newIfTree = getIfTerm(lhs, op, args, "\"deadLetters\"")
               patch += ctx.replaceTree(appInf, newIfTree.toString)
             case _ => Patch.empty
           }
@@ -128,10 +137,16 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   //Helper functions
-  def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
-    val listofargs = List[Term](Term.Name("self"), lhs) ::: args
+  def getIfTerm(lhs: Term, op: Term.Name, args: List[Term], ref: String): Term = {
 
-    val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listofargs)
+    val listOfArgs = if (ref == "self"){
+      List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
+    }
+    else {
+      List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
+    }
+
+    val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
     val elsep = Term.Block(List[Stat]())
     val thenp = Term.ApplyInfix(lhs, op, Nil, args)
 

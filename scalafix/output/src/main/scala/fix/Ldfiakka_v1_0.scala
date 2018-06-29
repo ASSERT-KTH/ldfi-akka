@@ -15,7 +15,7 @@ object HelpActor {
 
 class HelpActor extends Actor with ActorLogging {
   def receive = LoggingReceive {
-    case _ => if (Controller.greenLight(self, sender(), "Helping")) sender() ! "Helping" else {}
+    case _ => if (Controller.greenLight(self.path.name, sender().path.name, "Helping")) sender() ! "Helping" else {}
   }
 }
 
@@ -27,15 +27,15 @@ class NodeActor(helpActor: ActorRef) extends Actor with ActorLogging {
   val name : String = self.path.name
 
   def receive = LoggingReceive {
-    case _ => if (Controller.greenLight(self, helpActor, "hello")) helpActor ! "hello" else {}
+    case _ => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello" else {}
   }
 
   def receiveOther : Receive = LoggingReceive {
-    case _ => if (Controller.greenLight(self, helpActor, "hello")) helpActor ! "hello" else {}
+    case _ => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello" else {}
   }
 
   val receiveCommand : Receive = LoggingReceive {
-    case _ => if (Controller.greenLight(self, helpActor, "hello")) helpActor ! "hello" else {}
+    case _ => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello" else {}
   }
 
 }
@@ -46,7 +46,7 @@ class SimpleDeliv {
   val helpActor: ActorRef = system.actorOf(HelpActor.props.withDispatcher(CallingThreadDispatcher.Id), "HelpActor")
   val nodeActor : ActorRef = system.actorOf(NodeActor.props(helpActor).withDispatcher(CallingThreadDispatcher.Id), "nodeActor")
 
-  nodeActor ! "hello"
+  if (Controller.greenLight("deadLetters", nodeActor.path.name, "hello")) nodeActor ! "hello" else {}
   Await.ready(system.whenTerminated, Duration(5, TimeUnit.SECONDS))
 
 }
