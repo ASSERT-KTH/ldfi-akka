@@ -73,7 +73,7 @@ object Main {
       Source.fromFile("freePassMessages.txt").getLines().toList
     }
     catch {
-      case Exception => sys.error("Exception when reading from freePassMessages.txt. " +
+      case e: Exception => sys.error("Exception when reading from freePassMessages.txt. " +
         "If there are no free pass messages, create an empty freePassMessages.txt in root directory.")
     }
 
