@@ -14,8 +14,8 @@ class CNFConverterSuite extends FunSuite {
   def testaddLiteralsToClause(): Unit = {
     val formula = new Formula
     val clause = new Clause(formula)
-    val row = Row("A", "B", 1)
-    val msg = Message("A", "B", 1)
+    val row = Row("A", "B", 1, "")
+    val msg = MessageLit("A", "B", 1, "")
 
     CNFConverter.addRowToClause(clause, row)
     test("testing addLiteralToClause"){
@@ -24,7 +24,7 @@ class CNFConverterSuite extends FunSuite {
   }
 
   def testgetMessage(): Unit = {
-    val row = Row("A", "B", 1)
+    val row = Row("A", "B", 1, "")
     val msg = CNFConverter.getMessage(row)
     test("testing getMessage") {
       assert(msg.sender == row.sender)
@@ -34,7 +34,7 @@ class CNFConverterSuite extends FunSuite {
   }
 
   def testgetNode(): Unit = {
-    val row = Row("A", "B", 1)
+    val row = Row("A", "B", 1, "")
     val msg = CNFConverter.getSenderNode(row)
     test("testing getNode") {
       assert(msg.node == row.sender)

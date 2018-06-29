@@ -6,9 +6,9 @@ case class FailureSpec(eot: Int,
                        eff: Int,
                        maxCrashes: Int,
                        nodes: Set[Node],
-                       messages: Set[Message],
+                       messages: Set[MessageLit],
                        crashes: Set[Node] = Set.empty,
-                       cuts: Set[Message] = Set.empty){
+                       cuts: Set[MessageLit] = Set.empty){
 
   require(maxCrashes <= nodes.size, "Can't have more crashes than nodes")
   require(crashes.size <= maxCrashes, "Can't specify more than maxCrashes crashes")

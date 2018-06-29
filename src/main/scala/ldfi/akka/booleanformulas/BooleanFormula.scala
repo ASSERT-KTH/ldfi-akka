@@ -31,7 +31,7 @@ class Formula {
 
   def getAllNodes: Set[Node] = clauses.flatMap(c => c.literals.collect { case n: Node => n }).toSet
 
-  def getAllMessages: List[Message] = clauses.flatMap(c => c.literals.collect { case msg: Message => msg })
+  def getAllMessages: List[MessageLit] = clauses.flatMap(c => c.literals.collect { case msg: MessageLit => msg })
 
   def literalExistsInFormula(literal: Literal): Boolean = literalsToId.contains(literal)
 
@@ -66,13 +66,13 @@ class Formula {
 
   def updateLatestTime(literal: Literal): Unit = literal match {
     case Node(_, time) => if (time > latestTime) latestTime = time
-    case Message(_, _, time) => if (time > latestTime) latestTime = time
+    case MessageLit(_, _, time, _) => if (time > latestTime) latestTime = time
   }
 
   def updateSenderTime(literal: Literal): Unit = {
     literal match {
       case n@Node(id, time) => //DO NOTHING
-      case m@Message(sender, recipient, time) =>
+      case m@MessageLit(sender, recipient, time, _) =>
         firstMessageSent.get(sender) match {
           case Some(storedtime) if time > storedtime => firstMessageSent += (sender -> time)
           case Some(storedtime) if time <= storedtime => // Do nothing
@@ -84,7 +84,7 @@ class Formula {
   def updateActivityMap(literal: Literal): Unit = {
     literal match {
       case Node(id, currTime) => updateActivityMapHelper(id, currTime)
-      case Message(sender, recipient, currTime) =>
+      case MessageLit(sender, recipient, currTime, _) =>
         updateActivityMapHelper(sender, currTime)
         updateActivityMapHelper(recipient, currTime)
     }
@@ -113,7 +113,7 @@ class Clause(formula: Formula) {
     literals = literal :: literals
   }
 
-  def getMessagesInClause: List[Message] = literals.collect { case m: Message => m }
+  def getMessagesInClause: List[MessageLit] = literals.collect { case m: MessageLit => m }
 
   def getNodesInClause: Set[Node] = literals.collect { case n: Node => n }.toSet
 
@@ -125,7 +125,7 @@ sealed trait Literal extends Formula
 
 final case class Node(node: String, time: Int) extends Literal
 
-final case class Message(sender: String, recipient: String, time: Int) extends Literal
+final case class MessageLit(sender: String, recipient: String, time: Int, message: String) extends Literal
 
 
 

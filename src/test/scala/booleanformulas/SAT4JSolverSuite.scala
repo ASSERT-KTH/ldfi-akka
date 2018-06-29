@@ -19,8 +19,8 @@ class SAT4JSolverSuite extends FunSuite {
     val formula = new Formula
     val clause = new Clause(formula)
 
-    val msg1 = Message("A", "B", 1)
-    val msg2 = Message("A", "C", 1)
+    val msg1 = MessageLit("A", "B", 1, "")
+    val msg2 = MessageLit("A", "C", 1, "")
 
     val node1 = Node("A", 1)
     val node2 = Node("B", 1)
@@ -110,14 +110,14 @@ class SAT4JSolverSuite extends FunSuite {
 
   def testremoveSuperSets(): Unit = {
     val models = ListBuffer(
-      Set(Message("A", "B", 1).asInstanceOf[Literal]),
-      Set(Message("A", "B", 1).asInstanceOf[Literal], Message("A", "C", 1).asInstanceOf[Literal]),
+      Set(MessageLit("A", "B", 1, "").asInstanceOf[Literal]),
+      Set(MessageLit("A", "B", 1, "").asInstanceOf[Literal], MessageLit("A", "C", 1, "").asInstanceOf[Literal]),
       Set(Node("A", 1).asInstanceOf[Literal]),
       Set(Node("A", 1).asInstanceOf[Literal], Node("B", 1).asInstanceOf[Literal]))
 
     test("Testing removeSuperSets") {
       assert(SAT4JSolver.removeSuperSets(models, models) ==
-        Set(Set(Message("A", "B", 1)), Set(Node("A", 1))))
+        Set(Set(MessageLit("A", "B", 1, "")), Set(Node("A", 1))))
     }
   }
 
@@ -156,7 +156,7 @@ class SAT4JSolverSuite extends FunSuite {
   def generateCNFFormula(): Formula = {
     val formula = new Formula
     val clause = new Clause(formula)
-    val msgs = Set(Message("A", "B", 1), Message("A", "C", 1))
+    val msgs = Set(MessageLit("A", "B", 1, ""), MessageLit("A", "C", 1, ""))
     val nodes = Set(Node("A", 1), Node("B", 1), Node("C", 1))
     msgs.foreach(msg => clause.addLiteralToClause(msg))
     nodes.foreach(n => clause.addLiteralToClause(n))

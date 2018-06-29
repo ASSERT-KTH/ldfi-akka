@@ -1,8 +1,6 @@
 package ldfi.akka.booleanformulas
 
-import ldfi.akka.booleanformulas._
 import ldfi.akka.parser.AkkaParser._
-
 
 object CNFConverter {
 
@@ -34,13 +32,14 @@ object CNFConverter {
 
   def getRecipientNode(line: Row): Node = Node(line.recipient, line.time)
 
-  def getMessage(line: Row): Message = Message(line.sender, line.recipient, line.time)
+  def getMessage(line: Row): MessageLit = MessageLit(line.sender, line.recipient, line.time, line.message)
 
   def prettyPrintClause(clause: Clause): Unit = {
     for((literal, cnt) <- clause.literals.zipWithIndex){
       literal match {
         case Node(node, time) => print("P(" + node + ", " + time + ")")
-        case Message(sender, recipient, time) => print("M(" + sender + ", " + recipient + ", " + time + ")")
+        case MessageLit(sender, recipient, time, message) =>
+          print("M(" + sender + ", " + recipient + ", " + time + ", " + message + ")")
         case _ => println("ERROR in CNFConverter.prettyPrintClause: literal not Node or Message!")
       }
       if(cnt != clause.literals.size - 1){

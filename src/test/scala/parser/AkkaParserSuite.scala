@@ -23,7 +23,8 @@ class AkkaParserSuite extends FunSuite with Matchers {
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set.empty, List("Start"))
         test("Testing AkkaParser, two messages sent with no injections") {
-          assert(res == FormattedLogs(List(Row("A", "B", 1), Row("A", "C", 1))))
+          assert(res == FormattedLogs(List(Row("A", "B", 1, "Broadcast(Some payload)"),
+            Row("A", "C", 1, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 0)
     }
@@ -32,9 +33,9 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(1) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "C", 1)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "C", 1, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, two messages sent with single injection at time 1") {
-          assert(res == FormattedLogs(List(Row("A", "B", 1))))
+          assert(res == FormattedLogs(List(Row("A", "B", 1, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 1)
     }
@@ -43,9 +44,10 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(1) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, one messages sent with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "B", 3))))
+          assert(res == FormattedLogs(List(Row("A", "B", 3, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 1)
     }
@@ -54,9 +56,11 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(2) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, two same messages sent with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "C", 3))))
+          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
+            Row("A", "C", 3, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 2)
     }
@@ -65,9 +69,11 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(3) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, two diff messages sent with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "B", 3))))
+          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
+            Row("A", "B", 3, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 3)
     }
@@ -76,9 +82,11 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(4) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, different senders sent with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1), Row("C", "B", 3))))
+          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
+            Row("C", "B", 3, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 4)
     }
@@ -87,10 +95,12 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(5) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, different senders sent multiple messages " +
           "with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "D", 1), Row("C", "B", 3))))
+          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
+            Row("A", "D", 1, "Broadcast(Some payload)"), Row("C", "B", 3, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 5)
     }
@@ -99,10 +109,12 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(6) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(Message("A", "B", 1), Message("B", "A", 2)), List("Start"))
+        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, same sender sent multiple messages " +
           "with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1), Row("A", "D", 1), Row("A", "B", 3))))
+          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
+            Row("A", "D", 1, "Broadcast(Some payload)"), Row("A", "B", 3, "Broadcast(Some payload)"))))
         }
       case None => println("testLogs are empty at position " + 6)
     }
@@ -112,24 +124,24 @@ class AkkaParserSuite extends FunSuite with Matchers {
 
   def testmanageClock(): Unit = {
 
-    val inj1 = List(Message("A", "C", 1))
+    val inj1 = List(MessageLit("A", "C", 1, "Broadcast(Some payload)"))
     test("Assert that time does not tick when same injection sender and not injected") {
-      assert(AkkaParser.manageClock("A", "B", "", "",  0, inj1) == 1)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, "Broadcast(Some payload)", inj1) == 1)
     }
 
-    val inj2 = List(Message("B", "A", 1))
+    val inj2 = List(MessageLit("B", "A", 1, "Broadcast(Some payload)"))
     test("Assert that time ticks when not same injection sender") {
-      assert(AkkaParser.manageClock("A", "B", "", "", 0, inj2) == 2)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, "Broadcast(Some payload)", inj2) == 2)
     }
 
-    val inj3 = List(Message("A", "B", 1))
+    val inj3 = List(MessageLit("A", "B", 1, "Broadcast(Some payload)"))
     test("Assert that time ticks when same injection sender and injected") {
-      assert(AkkaParser.manageClock("A", "B", "", "", 0, inj3) == 2)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, "Broadcast(Some payload)", inj3) == 2)
     }
 
-    val inj4 = List(Message("A", "B", 1), Message("B", "A", 2))
+    val inj4 = List(MessageLit("A", "B", 1, "Broadcast(Some payload)"), MessageLit("B", "A", 2, "Broadcast(Some payload)"))
     test("Assert that time ticks two steps when same injection and next senderinjector is different"){
-      assert(AkkaParser.manageClock("A", "B", "", "", 0, inj4) == 3)
+      assert(AkkaParser.manageClock("A", "B", "", "", 0, "Broadcast(Some payload)", inj4) == 3)
     }
 
   }

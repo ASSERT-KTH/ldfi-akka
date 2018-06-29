@@ -25,7 +25,8 @@ object Evaluator {
     val input : Source = Source.fromFile("ldfi-akka/logs.log")
 
     if (!correctness) {
-      sys.error("Forwardstep: program: " + prog + ", does not work even with no failure injections.")
+      sys.error("Error. Forwardstep: running main program: " + prog.mainClass.getName + ", " +
+        "without failure injections violates the correctness specification")
     }
     //Format the program and convert it to CNF
     val format = AkkaParser.parse(input, Set.empty, freePassMessages)
@@ -65,7 +66,7 @@ object Evaluator {
       //if we did not violate the correctness property we keep looking for failures
       if(correct){
         //update failureSpec with new hypothesis
-        val hypcuts = hypothesis.collect { case msg: Message => msg }
+        val hypcuts = hypothesis.collect { case msg: MessageLit => msg }
         val hypcrashes = hypothesis collect { case n: Node => n }
         val updatedFailureSpec =
           failureSpec.copy(cuts = failureSpec.cuts ++ hypcuts, crashes = failureSpec.crashes ++ hypcrashes)

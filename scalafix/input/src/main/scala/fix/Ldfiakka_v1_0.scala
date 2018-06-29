@@ -8,32 +8,44 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-object Node {
-  def props: Props = Props(new Node())
+object HelpActor {
+  def props(): Props = Props(new HelpActor())
 }
 
-class Node extends Actor {
+class HelpActor extends Actor {
+  def receive = {
+    case _ => sender() ! "Helping"
+  }
+}
+
+object NodeActor {
+  def props(helpActor: ActorRef): Props = Props(new NodeActor(helpActor))
+}
+
+class NodeActor(helpActor: ActorRef) extends Actor {
   val name : String = self.path.name
 
   def receive = {
-    case _ => self ! "hello"
+    case _ => helpActor ! "hello"
   }
 
   def receiveOther : Receive = {
-    case _ => self ! "hello"
+    case _ => helpActor ! "hello"
   }
 
   val receiveCommand : Receive = {
-    case _ => self ! "hello"
+    case _ => helpActor ! "hello"
   }
 
 }
 
 class SimpleDeliv {
   val system : ActorSystem = ActorSystem("system")
-  val A : ActorRef = system.actorOf(Node.props, "A")
 
-  A ! "hello"
+  val helpActor: ActorRef = system.actorOf(HelpActor.props, "HelpActor")
+  val nodeActor : ActorRef = system.actorOf(NodeActor.props(helpActor), "nodeActor")
+
+  nodeActor ! "hello"
   Await.ready(system.whenTerminated, Duration(5, TimeUnit.SECONDS))
 
 }

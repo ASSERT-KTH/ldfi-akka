@@ -24,7 +24,7 @@ object SAT4JSolver {
 
     //Add clauses from cnf to solver
     for(c <- formula.clauses){
-      val messagesLosses = c.literals collect { case m:Message => m }
+      val messagesLosses = c.literals collect { case m:MessageLit => m }
       val crashes = c.literals collect { case n:Node => n }
       val vecInts = convertLitsToVecInt(formula, messagesLosses ++ crashes)
       solver.addClause(vecInts)
@@ -91,7 +91,7 @@ object SAT4JSolver {
       for (lit <- model) {
         lit match {
           case n: Node => print (n + " ")
-          case m: Message => print (m + " ")
+          case m: MessageLit => print (m + " ")
         }
       }
     }

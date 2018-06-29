@@ -129,7 +129,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
 
   //Helper functions
   def getIfTerm(lhs: Term, op: Term.Name, args: List[Term]): Term = {
-    val listofargs = List[Term](Term.Name("self"), lhs)
+    val listofargs = List[Term](Term.Name("self"), lhs) ::: args
+
     val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listofargs)
     val elsep = Term.Block(List[Stat]())
     val thenp = Term.ApplyInfix(lhs, op, Nil, args)
