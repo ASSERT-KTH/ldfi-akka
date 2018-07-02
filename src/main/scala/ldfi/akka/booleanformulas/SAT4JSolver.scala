@@ -54,7 +54,7 @@ object SAT4JSolver {
       models += currentModel
     }
 
-    val minimalModels = removeSuperSets(models, models)
+    val minimalModels = removeSuperSets(models.toList, models.toList)
     //printModels(minimalModels)
     minimalModels
 
@@ -71,18 +71,13 @@ object SAT4JSolver {
   }
 
 
-  def removeSuperSets(models : ListBuffer[Set[Literal]], entire : ListBuffer[Set[Literal]]): Set[Set[Literal]] =
-    models.size match {
-    case 0 => Set.empty
-    case 1 =>
-      val model = models.head
-      val isSuperSet = entire.filter(_ != model).exists { m => m.subsetOf(model) }
-      if(isSuperSet)
-        Set(Set.empty)
-      else
-        Set(model)
-    case _ => (removeSuperSets(ListBuffer(models.head), entire) ++ removeSuperSets(models.tail, entire)).
-      filter(_.nonEmpty)
+  def removeSuperSets (models: List[Set[Literal]], entire: List[Set[Literal]]): Set[Set[Literal]] = models match {
+    case Nil => Set.empty
+    case head :: tail =>
+      val isSuperSet = entire.filter(_ != head).exists { m => m.subsetOf(head) }
+      if(isSuperSet) removeSuperSets(tail, entire)
+      else Set(head) ++ removeSuperSets(tail, entire)
+
   }
 
   def printModels(models : Set[Set[Literal]]): Unit =  {

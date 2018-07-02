@@ -109,7 +109,7 @@ class SAT4JSolverSuite extends FunSuite {
   }
 
   def testremoveSuperSets(): Unit = {
-    val models = ListBuffer(
+    val models = List(
       Set(MessageLit("A", "B", 1, "").asInstanceOf[Literal]),
       Set(MessageLit("A", "B", 1, "").asInstanceOf[Literal], MessageLit("A", "C", 1, "").asInstanceOf[Literal]),
       Set(Node("A", 1).asInstanceOf[Literal]),

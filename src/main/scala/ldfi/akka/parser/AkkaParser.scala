@@ -56,9 +56,12 @@ object AkkaParser {
 
     //If same sender and recipient twice, then all messages have been cut in previous time step
     else if(curSen == prevSen && prevRec == curRec){
-      val existsNextInjection = injections.collect {case msg @ MessageLit(_, _, t, _) if t == curTime+1 => msg}.nonEmpty
-      //if there exists an injection at next step, then it must mean that there was a different actor sending messages
-      //in between this message and the one sent before (from this actor and recipient)
+      val existsNextInjection = injections.collect {
+        case msg @ MessageLit(sen, _, t, _) if t == curTime + 1 && curSen != sen=>
+          msg
+      }.nonEmpty
+      //if there exists an injection at next step with a different actor,
+      // then we know that a different actor sent messages in between this message and the last one (but they were omitted)
       if(existsNextInjection){
         manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
       }
