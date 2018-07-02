@@ -45,38 +45,53 @@ object AkkaParser {
   def manageClock(curSen: String, curRec: String, prevSen: String, prevRec: String,
                   curTime: Int, curMsg: String, injections: List[Literal]): Int = {
     //if new sender, increment clock
-    if(curSen != prevSen)
+    if(curSen != prevSen){
       manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
+    }
 
     //same sender, but not all messages has been cut
-    else if(curSen == prevSen && prevRec != curRec)
+    else if(curSen == prevSen && prevRec != curRec){
       manageClockHelper(curSen, curRec, curTime, curMsg, injections)
+    }
 
     //If same sender and recipient twice, then all messages have been cut in previous time step
-    else if(curSen == prevSen && prevRec == curRec)
-      manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
+    else if(curSen == prevSen && prevRec == curRec){
+      val existsNextInjection = injections.collect {case msg @ MessageLit(_, _, t, _) if t == curTime+1 => msg}.nonEmpty
+      //if there exists an injection at next step, then it must mean that there was a different actor sending messages
+      //in between this message and the one sent before (from this actor and recipient)
+      if(existsNextInjection){
+        manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
+      }
+      else {
+        curTime
+      }
+    }
 
     //default case, do not update clock
-    else
+    else {
       curTime
+    }
   }
 
   def manageClockHelper(curSen: String, curRec: String, curTime: Int, curMsg: String, injections: List[Literal]): Int = {
-    if (shouldTick(curSen, curRec, curTime, curMsg, injections))
+    if (shouldTick(curSen, curRec, curTime, curMsg, injections)){
       manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
-    else
+    }
+    else {
       curTime
+    }
   }
 
   def shouldTick(curSen: String, curRec: String, curTime: Int, curMsg: String, injections: List[Literal]) : Boolean = {
     val curMsgLit = MessageLit(curSen, curRec, curTime, curMsg)
     val injectionsAtCurTime = injections.collect { case msg @ MessageLit(_, _, t, _) if t == curTime => msg }
-    val sameSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
+    //check if there are messages that has been injected by this sender at this time
+    val sameInjectionSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
     val isInjected = injectionsAtCurTime.contains(curMsgLit)
 
     //The parser will not realize that some messages have been cut. This has to be corrected for when managing
     //the logical clock
-    val res = injectionsAtCurTime.nonEmpty && (!sameSender | (sameSender && isInjected))
+    val res = injectionsAtCurTime.nonEmpty && (!sameInjectionSender | (sameInjectionSender && isInjected))
     res
   }
 

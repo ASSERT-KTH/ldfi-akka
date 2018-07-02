@@ -56,6 +56,18 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(2) match {
       case Some(input) =>
         val src = Source.fromString(input)
+        val res: FormattedLogs = AkkaParser.parse(src, Set.empty, List("Start"))
+        test("Testing AkkaParser, two same messages sent to same actor with no injections") {
+          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
+            Row("A", "C", 1, "Broadcast(Some payload)"))))
+        }
+      case None => println("testLogs are empty at position " + 2)
+    }
+
+    //C receives from A, C receives from A
+    logs.lift(2) match {
+      case Some(input) =>
+        val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
           MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
         test("Testing AkkaParser, two same messages sent with injection at first step & \"ghost\" time at step 2") {
@@ -120,7 +132,6 @@ class AkkaParserSuite extends FunSuite with Matchers {
     }
 
   }
-
 
   def testmanageClock(): Unit = {
 
