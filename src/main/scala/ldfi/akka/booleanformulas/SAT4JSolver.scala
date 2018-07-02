@@ -70,14 +70,12 @@ object SAT4JSolver {
     new VecInt(idList.toArray)
   }
 
-
   def removeSuperSets (models: List[Set[Literal]], entire: List[Set[Literal]]): Set[Set[Literal]] = models match {
     case Nil => Set.empty
     case head :: tail =>
       val isSuperSet = entire.filter(_ != head).exists { m => m.subsetOf(head) }
       if(isSuperSet) removeSuperSets(tail, entire)
       else Set(head) ++ removeSuperSets(tail, entire)
-
   }
 
   def printModels(models : Set[Set[Literal]]): Unit =  {
