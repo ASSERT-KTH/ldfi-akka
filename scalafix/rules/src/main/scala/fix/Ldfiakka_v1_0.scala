@@ -128,10 +128,10 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
       val patchList = head.collect {
         case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
           val newIfTree = constructIfTerm(lhs, args, ref, appInf)
-          ctx.replaceTree(appInf, newIfTree.toString)
+          ctx.replaceTree(appInf, newIfTree.toString())
         case app @ Term.Apply(Term.Select(qual, name), args) if name.value == "tell" =>
           val newIfTree = constructIfTerm(qual, List(args.head), ref, app)
-          ctx.replaceTree(app, newIfTree.toString)
+          ctx.replaceTree(app, newIfTree.toString())
         case _ => Patch.empty
       }
       patchList.reduceLeft(_ + _) + getControllerPatch(ctx, ref, tail)
@@ -145,7 +145,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
       List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
     }
     val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
-    val elsep = Term.Block(List[Stat]())
+    val elsep = Lit.Unit()
+    //Term.If(condp, Term.Block(List(thenp)), elsep)
     Term.If(condp, thenp, elsep)
   }
 
