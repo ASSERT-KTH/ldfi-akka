@@ -127,23 +127,27 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     case head :: tail =>
       val patchList = head.collect {
         case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
-          val listOfArgs = if (ref == "self") {
-            List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
-          }
-          else {
-            List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
-          }
-          val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
-          val elsep = Term.Block(List[Stat]())
-          val thenp = Term.ApplyInfix(lhs, op, Nil, args)
-          val newIfTree = Term.If(condp, thenp, elsep)
+          val newIfTree = constructIfTerm(lhs, args, ref, appInf)
           ctx.replaceTree(appInf, newIfTree.toString)
-
+        case app @ Term.Apply(Term.Select(qual, name), args) if name.value == "tell" =>
+          val newIfTree = constructIfTerm(qual, List(args.head), ref, app)
+          ctx.replaceTree(app, newIfTree.toString)
         case _ => Patch.empty
       }
       patchList.reduceLeft(_ + _) + getControllerPatch(ctx, ref, tail)
   }
 
+  def constructIfTerm(lhs: Term, args: List[Term], ref: String, thenp: Term): Term = {
+    val listOfArgs = if (ref == "self") {
+      List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
+    }
+    else {
+      List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
+    }
+    val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
+    val elsep = Term.Block(List[Stat]())
+    Term.If(condp, thenp, elsep)
+  }
 
   def hasGreenLight(stats: List[Stat]): Boolean = {
     stats.exists { s =>

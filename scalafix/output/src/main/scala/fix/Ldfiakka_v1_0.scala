@@ -27,7 +27,8 @@ class NodeActor(helpActor: ActorRef) extends Actor with ActorLogging {
   val name : String = self.path.name
 
   def receive = LoggingReceive {
-    case _ => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello" else {}
+    case "hello" => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello" else {}
+    case "howdy" => if (Controller.greenLight(self.path.name, helpActor.path.name, "howdy")) helpActor.tell("howdy", self) else {}
   }
 
   def receiveOther : Receive = LoggingReceive {
@@ -47,6 +48,7 @@ class SimpleDeliv {
   val nodeActor : ActorRef = system.actorOf(NodeActor.props(helpActor).withDispatcher(CallingThreadDispatcher.Id), "nodeActor")
 
   if (Controller.greenLight("deadLetters", nodeActor.path.name, "hello")) nodeActor ! "hello" else {}
+  if (Controller.greenLight("deadLetters", nodeActor.path.name, "hello")) nodeActor.tell("hello", system.deadLetters) else {}
   Await.ready(system.whenTerminated, Duration(5, TimeUnit.SECONDS))
 
 }

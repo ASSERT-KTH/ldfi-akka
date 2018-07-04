@@ -89,7 +89,7 @@ object AkkaParser {
     val curMsgLit = MessageLit(curSen, curRec, curTime, curMsg)
     val injectionsAtCurTime = injections.collect { case msg @ MessageLit(_, _, t, _) if t == curTime => msg }
     //check if there are messages that has been injected by this sender at this time
-    val sameInjectionSender = injectionsAtCurTime.exists(_.sender == curSen) && injectionsAtCurTime.nonEmpty
+    val sameInjectionSender = injectionsAtCurTime.exists(_.sender == curSen)
     val isInjected = injectionsAtCurTime.contains(curMsgLit)
 
     //The parser will not realize that some messages have been cut. This has to be corrected for when managing

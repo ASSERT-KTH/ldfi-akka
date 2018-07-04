@@ -26,7 +26,8 @@ class NodeActor(helpActor: ActorRef) extends Actor {
   val name : String = self.path.name
 
   def receive = {
-    case _ => helpActor ! "hello"
+    case "hello" => helpActor ! "hello"
+    case "howdy" => helpActor.tell("howdy", self)
   }
 
   def receiveOther : Receive = {
@@ -46,6 +47,7 @@ class SimpleDeliv {
   val nodeActor : ActorRef = system.actorOf(NodeActor.props(helpActor), "nodeActor")
 
   nodeActor ! "hello"
+  nodeActor.tell("hello", system.deadLetters)
   Await.ready(system.whenTerminated, Duration(5, TimeUnit.SECONDS))
 
 }
