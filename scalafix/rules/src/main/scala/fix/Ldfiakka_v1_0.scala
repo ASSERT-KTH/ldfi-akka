@@ -90,28 +90,12 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
 
   //_ ! _ => if(Controller.greenLight) _ ! _ else {}
   def addControllerGreenLight(ctx: RuleCtx): Patch = {
-    var patch = Patch.empty
     ctx.tree.collect {
       case templ @ Template (_, inits, _, stats) if isExtendedWithActor(inits) && !hasGreenLight(stats) =>
-        for(stat <- stats){
-          stat.collect  {
-            case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
-              val newIfTree = getIfTerm(lhs, op, args, "self")
-              patch += ctx.replaceTree(appInf, newIfTree.toString)
-            case _ => Patch.empty
-          }
-        }
+        getControllerPatch(ctx, "self", stats)
       case templ @ Template (_, inits, _, stats) if !hasGreenLight(stats) =>
-        for(stat <- stats){
-          stat.collect  {
-            case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
-              val newIfTree = getIfTerm(lhs, op, args, "\"deadLetters\"")
-              patch += ctx.replaceTree(appInf, newIfTree.toString)
-            case _ => Patch.empty
-          }
-        }
-    }
-    patch
+        getControllerPatch(ctx, "\"deadLetters\"", stats)
+    }.asPatch
   }
 
   //_.actorOf(_, _) => _.actorOf(_.withDispatcher(CallingThreadDispatcher.Id), _)
@@ -137,21 +121,29 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   //Helper functions
-  def getIfTerm(lhs: Term, op: Term.Name, args: List[Term], ref: String): Term = {
 
-    val listOfArgs = if (ref == "self"){
-      List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
-    }
-    else {
-      List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
-    }
+  def getControllerPatch(ctx: RuleCtx, ref: String, stats: List[Stat]): Patch = stats match {
+    case Nil => Patch.empty
+    case head :: tail =>
+      val patchList = head.collect {
+        case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
+          val listOfArgs = if (ref == "self") {
+            List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
+          }
+          else {
+            List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
+          }
+          val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
+          val elsep = Term.Block(List[Stat]())
+          val thenp = Term.ApplyInfix(lhs, op, Nil, args)
+          val newIfTree = Term.If(condp, thenp, elsep)
+          ctx.replaceTree(appInf, newIfTree.toString)
 
-    val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
-    val elsep = Term.Block(List[Stat]())
-    val thenp = Term.ApplyInfix(lhs, op, Nil, args)
-
-    Term.If(condp, thenp, elsep)
+        case _ => Patch.empty
+      }
+      patchList.reduceLeft(_ + _) + getControllerPatch(ctx, ref, tail)
   }
+
 
   def hasGreenLight(stats: List[Stat]): Boolean = {
     stats.exists { s =>
