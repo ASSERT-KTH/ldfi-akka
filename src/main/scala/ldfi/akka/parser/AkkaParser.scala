@@ -46,12 +46,12 @@ object AkkaParser {
                   curTime: Int, curMsg: String, injections: List[Literal]): Int = {
     //if new sender, increment clock
     if(curSen != prevSen){
-      manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
+      clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
     }
 
     //same sender, but not all messages has been cut
     else if(curSen == prevSen && prevRec != curRec){
-      manageClockHelper(curSen, curRec, curTime, curMsg, injections)
+      clockIterator(curSen, curRec, curTime, curMsg, injections)
     }
 
     //If same sender and recipient twice, then all messages have been cut in previous time step
@@ -63,7 +63,7 @@ object AkkaParser {
       //if there exists an injection at next step with a different actor,
       // then we know that a different actor sent messages in between this message and the last one (but they were omitted)
       if(existsNextInjection){
-        manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
+        clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
       }
       else {
         curTime
@@ -76,9 +76,9 @@ object AkkaParser {
     }
   }
 
-  def manageClockHelper(curSen: String, curRec: String, curTime: Int, curMsg: String, injections: List[Literal]): Int = {
+  def clockIterator(curSen: String, curRec: String, curTime: Int, curMsg: String, injections: List[Literal]): Int = {
     if (shouldTick(curSen, curRec, curTime, curMsg, injections)){
-      manageClockHelper(curSen, curRec, curTime + 1, curMsg, injections)
+      clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
     }
     else {
       curTime

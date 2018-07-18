@@ -12,7 +12,6 @@ import scala.io.Source
 
 object Evaluator {
 
-  var solToFSpec : Map[Set[Literal], FailureSpec] = Map.empty
 
   def evaluate(prog: Program, freePassMessages: List[String]): Unit = {
 
@@ -50,37 +49,65 @@ object Evaluator {
     val formula = new Formula
 
     //start evaluator with init failure spec and empty hypothesis
-    evaluator(formula, initFailureSpec, Set.empty)
+    val solutions = concreteEvaluator(prog, freePassMessages, formula, initFailureSpec, Set.empty)
 
     //Print Failure Injections
-    prettyPrintFailureSpecs()
+    prettyPrintFailureSpecs(solutions)
 
-    def evaluator(formula: Formula, failureSpec: FailureSpec, hypothesis: Set[Literal]): Unit = {
+  }
 
-      println("\n\n**********************************************************************\n" +
-        "New run with following injection hypothesis: " + hypothesis + "\n" +
-        "And the following failureSpec: " + failureSpec + "\n" +
-        "**********************************************************************\n\n")
-      val correct = forwardStep(prog, hypothesis)
+  def concreteEvaluator(prog: Program,
+                        freePassMessages: List[String],
+                        formula: Formula,
+                        failureSpec: FailureSpec,
+                        hypothesis: Set[Literal]): Map[Set[Literal], FailureSpec] =
+    evaluator(prog, freePassMessages, formula, failureSpec, hypothesis, Map.empty) match {
+      case m: Map[Set[Literal], FailureSpec] if m.isEmpty =>
+        if(failureSpec.eff < failureSpec.eot - 1){
+          val EFF = failureSpec.eff
+          concreteEvaluator(prog, freePassMessages, new Formula, failureSpec.copy(eff = EFF + 1), hypothesis)
+        }
+        else {
+          Map.empty
+        }
+      case solutions => solutions
+    }
 
-      //if we did not violate the correctness property we keep looking for failures
-      if(correct){
-        //update failureSpec with new hypothesis
-        val hypcuts = hypothesis.collect { case msg: MessageLit => msg }
-        val hypcrashes = hypothesis collect { case n: Node => n }
-        val updatedFailureSpec =
-          failureSpec.copy(cuts = failureSpec.cuts ++ hypcuts, crashes = failureSpec.crashes ++ hypcrashes)
+  def evaluator(prog: Program,
+                freePassMessages: List[String],
+                formula: Formula,
+                failureSpec: FailureSpec,
+                hypothesis: Set[Literal],
+                solutions: Map[Set[Literal], FailureSpec]
+               ): Map[Set[Literal], FailureSpec] = {
 
-        //perform the backward step to obtain the new CNF formula
-        val newHypotheses = backwardStep(formula, updatedFailureSpec, freePassMessages)
+    println("\n\n**********************************************************************\n" +
+      "New run with following injection hypothesis: " + hypothesis + "\n" +
+      "And the following failureSpec: " + failureSpec + "\n" +
+      "**********************************************************************\n\n")
+    val correct = forwardStep(prog, hypothesis)
 
-        //call evaluator recursively for every hypothesis
-        newHypotheses.foreach(hypo => evaluator(formula, updatedFailureSpec, hypo))
-      }
-      //hypothesis is real solution
-      else{
-        solToFSpec += (hypothesis -> failureSpec)
-      }
+    //if we did not violate the correctness property we keep looking for failures
+    if(correct){
+      //update failureSpec with new hypothesis
+      val hypcuts = hypothesis.collect { case msg: MessageLit => msg }
+      val hypcrashes = hypothesis collect { case n: Node => n }
+      val updatedFailureSpec =
+        failureSpec.copy(cuts = failureSpec.cuts ++ hypcuts, crashes = failureSpec.crashes ++ hypcrashes)
+
+      //perform the backward step to obtain the new CNF formula
+      val newHypotheses = backwardStep(formula, updatedFailureSpec, freePassMessages)
+
+      //call evaluator recursively for every hypothesis
+      newHypotheses.map { hypo =>
+        evaluator(prog, freePassMessages, formula, updatedFailureSpec, hypo, solutions)
+      }.reduce(_ ++ _)
+
+    }
+
+    //hypothesis is real solution
+    else{
+      solutions + (hypothesis -> failureSpec)
     }
   }
 
@@ -141,12 +168,12 @@ object Evaluator {
   }
 
 
-  def prettyPrintFailureSpecs(): Unit = {
+  def prettyPrintFailureSpecs(solutions: Map[Set[Literal], FailureSpec]): Unit = {
     println("\n\n" +
       "********************************************************\n" +
       "**************** FAILURE SPECIFICATIONS ****************\n" +
       "********************************************************")
-    solToFSpec.foreach { elem =>
+    solutions.foreach { elem =>
       val fSpec = elem._2
       print("\nFailure injection: " + elem._1 + " with failure specification: <" + fSpec.eot + "," + fSpec.eff + "," +
         fSpec.maxCrashes + "> violated the correctness specification")
