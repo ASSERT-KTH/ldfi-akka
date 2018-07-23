@@ -43,7 +43,7 @@ class NodeActor(helpActor: ActorRef) extends Actor {
 class SimpleDeliv {
   val system : ActorSystem = ActorSystem("system")
 
-  val helpActor: ActorRef = system.actorOf(HelpActor.props, "HelpActor")
+  val helpActor: ActorRef = system.actorOf(Props[HelpActor], "HelpActor")
   val nodeActor : ActorRef = system.actorOf(NodeActor.props(helpActor), "nodeActor")
 
   nodeActor ! "hello"

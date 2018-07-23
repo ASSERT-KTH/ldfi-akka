@@ -1,6 +1,6 @@
-
 package fix
 
+import scala.meta.Pat.Wildcard
 import scalafix._
 import scala.meta._
 
@@ -9,7 +9,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     //debugRules(ctx)
     importAkkaEvent(ctx) + importDispatcher(ctx) + importController(ctx) + importActorLogging(ctx) +
       addLoggingReceive(ctx) + addExtendsWithActorLogging(ctx) +
-      addControllerGreenLight(ctx) + addDispatcherToProps(ctx)
+      addControllerGreenLight(ctx) + addDispatcherToProps(ctx) + addLogging(ctx)
   }
 
   def addImportsForActorClass(importee: Importee, importer: Importer, ctx: RuleCtx): Patch = {
@@ -120,6 +120,45 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     }
   }
 
+  //when(_)  { case _ => ... } => when(_)  { case _ => log.debug("...") ... } =>
+  def addLogging(ctx: RuleCtx): Patch = {
+    ctx.tree.collect {
+      case templ @ Template(_, inits, _, stats) if isExtendedWithFSM(inits) =>
+        constructLoggingMessage(ctx, stats)
+    }.asPatch
+  }
+
+  def constructLoggingMessage(ctx: RuleCtx, stats: List[Stat]): Patch = {
+    stats.collect {
+      case Term.Apply(fun, pfn) if isWhen(fun) || isWhenUnhandled(fun) =>
+        val listOfCases = pfn.collect { case pfn: Term.PartialFunction => pfn }
+        val head = listOfCases.head
+
+        if(head.cases.nonEmpty)
+          head.cases.map { cse =>
+            cse match {
+              case cs @ Case(Pat.Bind(Pat.Var(Term.Name(valu)), rhs), _, body) =>
+                //println("\nMatching option with var name and ambig body for:\nCase: " + cs)
+                val loggingMessage = "log.debug(\" received handled message \" + " + valu + " + \" from \" + sender())" + "\n"
+                ctx.addLeft(body, loggingMessage)
+
+              case cs @ Case(pat: `Wildcard`, _, body) =>
+                val loggingMessage = "log.debug(\" received handled message \" + ev + \" from \" + sender())" + "\n"
+                //println("\nMatching option no var name and ambig body with wildcard for : \nCase: " + cs)
+                ctx.replaceTree(pat, "ev") + ctx.addLeft(body, loggingMessage)
+
+              case cs @ Case(pat, _, body) =>
+                //println("\nMatching option no var name and ambig body for: \nCase: " + cs)
+                val loggingMessage = "log.debug(\" received handled message \" + ev + \" from \" + sender())" + "\n"
+                ctx.addLeft(pat, "ev @ ") + ctx.addLeft(body, loggingMessage)
+            }
+          }.reduceLeft(_ + _)
+        else Patch.empty
+
+      case _ => Patch.empty
+    }.reduceLeft(_ + _)
+  }
+
   //Helper functions
 
   def getControllerPatch(ctx: RuleCtx, ref: String, stats: List[Stat]): Patch = stats match {
@@ -198,6 +237,21 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     ctx.debugIndex()
     println(s"Tree.syntax: " + ctx.tree.syntax)
     println(s"Tree.structure: " + ctx.tree.structure)
+  }
+
+  def isExtendedWithFSM(inits: List[Init]): Boolean = inits.exists(i => i.tpe.toString().contains("FSM"))
+
+  def isExtendedWithPersistentFSM(inits: List[Init]): Boolean =
+    inits.exists(i => i.tpe.toString().contains("PersistentFSM"))
+
+  def isWhen(fun: Term): Boolean = fun match {
+    case Term.Apply(Term.Name("when"), _) => true
+    case _ => false
+  }
+
+  def isWhenUnhandled(fun: Term): Boolean = fun match {
+    case Term.Name("whenUnhandled") => true
+    case _ => false
   }
 
 }
