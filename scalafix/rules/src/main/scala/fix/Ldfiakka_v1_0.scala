@@ -134,25 +134,28 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
         val listOfCases = pfn.collect { case pfn: Term.PartialFunction => pfn }
         val head = listOfCases.head
 
-        if(head.cases.nonEmpty)
-          head.cases.map { cse =>
+        if(head.cases.nonEmpty) {
+          val patches = head.cases.map { cse =>
             cse match {
-              case cs @ Case(Pat.Bind(Pat.Var(Term.Name(valu)), rhs), _, body) =>
+              case cs@Case(Pat.Bind(Pat.Var(Term.Name(valu)), rhs), _, body) =>
                 //println("\nMatching option with var name and ambig body for:\nCase: " + cs)
                 val loggingMessage = "log.debug(\" received handled message \" + " + valu + " + \" from \" + sender())" + "\n"
                 ctx.addLeft(body, loggingMessage)
 
-              case cs @ Case(pat: `Wildcard`, _, body) =>
+              case cs@Case(pat: `Wildcard`, _, body) =>
                 val loggingMessage = "log.debug(\" received handled message \" + ev + \" from \" + sender())" + "\n"
                 //println("\nMatching option no var name and ambig body with wildcard for : \nCase: " + cs)
                 ctx.replaceTree(pat, "ev") + ctx.addLeft(body, loggingMessage)
 
-              case cs @ Case(pat, _, body) =>
+              case cs@Case(pat, _, body) =>
                 //println("\nMatching option no var name and ambig body for: \nCase: " + cs)
                 val loggingMessage = "log.debug(\" received handled message \" + ev + \" from \" + sender())" + "\n"
                 ctx.addLeft(pat, "ev @ ") + ctx.addLeft(body, loggingMessage)
             }
-          }.reduceLeft(_ + _)
+          }
+          if(patches.isEmpty) Patch.empty
+          else patches.reduceLeft(_ + _)
+        }
         else Patch.empty
 
       case _ => Patch.empty
