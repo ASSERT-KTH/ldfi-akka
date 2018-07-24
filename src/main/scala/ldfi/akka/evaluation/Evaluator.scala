@@ -99,9 +99,11 @@ object Evaluator {
       val newHypotheses = backwardStep(formula, updatedFailureSpec, freePassMessages)
 
       //call evaluator recursively for every hypothesis
-      newHypotheses.map { hypo =>
+      val result = newHypotheses.map { hypo =>
         evaluator(prog, freePassMessages, formula, updatedFailureSpec, hypo, solutions)
-      }.reduce(_ ++ _)
+      }
+      if (result.isEmpty) Map.empty
+      else result.reduceLeft(_ ++ _)
 
     }
 
