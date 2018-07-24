@@ -107,7 +107,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     else {
       ctx.tree.collect {
         case apply@Term.Apply(fun, args) =>
-          val initsActor = fun.collect { case term@Term.Name(value) if value == "actorOf" => term }.nonEmpty
+          val initsActor = fun.collect {
+            case term@Term.Name(value) if value == "actorOf" || value == "classOf" => term }.nonEmpty
           if (initsActor) {
             args.lift(args.length - 2) match {
               case Some(props) => ctx.addRight(props, ".withDispatcher(CallingThreadDispatcher.Id)")
@@ -118,6 +119,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
         case _ => Patch.empty
       }.asPatch
     }
+
   }
 
   //when(_)  { case _ => ... } => when(_)  { case _ => log.debug("...") ... } =>
