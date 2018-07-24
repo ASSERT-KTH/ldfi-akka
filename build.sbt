@@ -38,7 +38,3 @@ libraryDependencies += "io.monix" %% "monix" % "3.0.0-8084549"
 
 libraryDependencies += "org.scalameta" %% "langmeta" % "3.7.4"
 
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
-
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.5.10")
-
