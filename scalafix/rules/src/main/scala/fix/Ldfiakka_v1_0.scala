@@ -151,6 +151,8 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
                 //println("\nMatching option no var name and ambig body for: \nCase: " + cs)
                 val loggingMessage = "log.debug(\" received handled message \" + ev + \" from \" + sender())" + "\n"
                 ctx.addLeft(pat, "ev @ ") + ctx.addLeft(body, loggingMessage)
+
+              case _ => Patch.empty
             }
           }
           if(patches.isEmpty) Patch.empty
