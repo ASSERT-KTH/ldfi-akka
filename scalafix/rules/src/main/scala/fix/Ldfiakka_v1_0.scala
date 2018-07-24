@@ -129,7 +129,7 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def constructLoggingMessage(ctx: RuleCtx, stats: List[Stat]): Patch = {
-    stats.collect {
+    val result = stats.collect {
       case Term.Apply(fun, pfn) if isWhen(fun) || isWhenUnhandled(fun) =>
         val listOfCases = pfn.collect { case pfn: Term.PartialFunction => pfn }
         val head = listOfCases.head
@@ -159,7 +159,9 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
         else Patch.empty
 
       case _ => Patch.empty
-    }.reduceLeft(_ + _)
+    }
+    if(result.isEmpty) Patch.empty
+    else result.reduceLeft(_ + _)
   }
 
   //Helper functions
