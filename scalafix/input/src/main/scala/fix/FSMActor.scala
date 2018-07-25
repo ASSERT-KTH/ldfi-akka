@@ -75,7 +75,7 @@ class FSMTest {
 
   def main(args: Array[String]): Unit = {
     val system : ActorSystem = ActorSystem("system")
-    val FSMActor: ActorRef = system.actorOf(Props(classOf[FSMActor]), "FSM")
+    val FSMActor: ActorRef = system.actorOf(Props[FSMActor], "FSM")
   }
 
 }

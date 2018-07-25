@@ -157,15 +157,13 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
               case _ => Patch.empty
             }
           }
-          if(patches.isEmpty) Patch.empty
-          else patches.reduceLeft(_ + _)
+          if(patches.isEmpty) Patch.empty else patches.reduceLeft(_ + _)
         }
         else Patch.empty
 
       case _ => Patch.empty
     }
-    if(result.isEmpty) Patch.empty
-    else result.reduceLeft(_ + _)
+    if(result.isEmpty) Patch.empty else result.reduceLeft(_ + _)
   }
 
   //Helper functions
@@ -174,10 +172,15 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
     case Nil => Patch.empty
     case head :: tail =>
       val patchList = head.collect {
-        case appInf @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
-          val newIfTree = constructIfTerm(lhs, args, ref, appInf)
-          ctx.replaceTree(appInf, newIfTree.toString())
-        case app @ Term.Apply(Term.Select(qual, name), args) if name.value == "tell" =>
+        case appInfBang @ Term.ApplyInfix(lhs, op @ Term.Name("!"), _, args) =>
+          val newIfTree = constructIfTerm(lhs, args, ref, appInfBang)
+          ctx.replaceTree(appInfBang, newIfTree.toString())
+        case appInfForward @ Term.ApplyInfix(lhs, op @ Term.Name("forward"), dc, args) =>
+          val thenp =
+            Term.ApplyInfix(lhs, Term.Name("tell"), dc, args :+ Term.Apply(Term.Name("sender"), List[Term]()))
+          val newIfTree = constructIfTerm(lhs, args, "sender()", thenp)
+          ctx.replaceTree(appInfForward, newIfTree.toString())
+        case app @ Term.Apply(Term.Select(qual, Term.Name("tell")), args) =>
           val newIfTree = constructIfTerm(qual, List(args.head), ref, app)
           ctx.replaceTree(app, newIfTree.toString())
         case _ => Patch.empty
@@ -186,15 +189,14 @@ final case class Ldfiakka_v1_0(index: SemanticdbIndex) extends SemanticRule(inde
   }
 
   def constructIfTerm(lhs: Term, args: List[Term], ref: String, thenp: Term): Term = {
-    val listOfArgs = if (ref == "self") {
-      List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
+    val listOfArgs = if (ref == "\"deadLetters\"") {
+      List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
     }
     else {
-      List[Term](Term.Name(ref), Term.Name(lhs.toString() + ".path.name")) ::: args
+      List[Term](Term.Name(ref + ".path.name"), Term.Name(lhs.toString() + ".path.name")) ::: args
     }
     val condp = Term.Apply(Term.Select(Term.Name("Controller"), Term.Name("greenLight")), listOfArgs)
     val elsep = Lit.Unit()
-    //Term.If(condp, Term.Block(List(thenp)), elsep)
     Term.If(condp, thenp, elsep)
   }
 

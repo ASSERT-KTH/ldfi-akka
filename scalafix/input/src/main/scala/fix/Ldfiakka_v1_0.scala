@@ -28,6 +28,7 @@ class NodeActor(helpActor: ActorRef) extends Actor {
   def receive = {
     case "hello" => helpActor ! "hello"
     case "howdy" => helpActor.tell("howdy", self)
+    case "greetings" => helpActor forward "greetings"
   }
 
   def receiveOther : Receive = {
@@ -43,8 +44,8 @@ class NodeActor(helpActor: ActorRef) extends Actor {
 class SimpleDeliv {
   val system : ActorSystem = ActorSystem("system")
 
-  val helpActor: ActorRef = system.actorOf(Props[HelpActor], "HelpActor")
-  val nodeActor : ActorRef = system.actorOf(NodeActor.props(helpActor), "nodeActor")
+  val helpActor: ActorRef = system.actorOf(HelpActor.props, "HelpActor")
+  val nodeActor : ActorRef = system.actorOf(Props(classOf[NodeActor], helpActor), "nodeActor")
 
   nodeActor ! "hello"
   nodeActor.tell("hello", system.deadLetters)
