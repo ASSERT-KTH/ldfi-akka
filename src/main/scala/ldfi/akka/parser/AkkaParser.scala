@@ -7,7 +7,7 @@ import scala.io.Source
 object AkkaParser {
 
   object Clock {
-    private var time : Int = 0
+    private var time: Int = 0
 
     def tick(): Unit = time = time + 1
     def getTime: Int = time
@@ -19,8 +19,7 @@ object AkkaParser {
     Clock.reset()
     var formattedLogs = ListBuffer[Row]()
     var previousSender, previousRecipient =  ""
-    val lines = input.getLines
-      .filter(x => x.contains("received handled message"))
+    val lines = input.getLines.filter(x => x.contains("received handled message"))
 
     for (line <- lines) {
       val filteredLine = line.replaceAll("\\s", "")
@@ -57,8 +56,7 @@ object AkkaParser {
     //If same sender and recipient twice, then all messages have been cut in previous time step
     else if(curSen == prevSen && prevRec == curRec){
       val existsNextInjection = injections.collect {
-        case msg @ MessageLit(sen, _, t, _) if t == curTime + 1 && curSen != sen=>
-          msg
+        case msg @ MessageLit(sen, _, t, _) if t == curTime + 1 && curSen != sen => msg
       }.nonEmpty
       //if there exists an injection at next step with a different actor,
       // then we know that a different actor sent messages in between this message and the last one (but they were omitted)

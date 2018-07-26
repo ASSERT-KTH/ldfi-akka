@@ -4,12 +4,12 @@ import akka.actor._
 import ldfi.akka.booleanformulas._
 
 object Controller {
-  private var infoHolder : infoHolder = new infoHolder
-  private var injections : Set[Literal] = Set.empty
+  private var infoHolder: infoHolder = new infoHolder
+  private var injections: Set[Literal] = Set.empty
 
   private class infoHolder {
-    private var previousSender : String = _
-    private var time : Int = 0
+    private var previousSender: String = _
+    private var time: Int = 0
 
     def tickClock(): Unit = time = time + 1
     def getTime: Int = time

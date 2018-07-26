@@ -24,7 +24,7 @@ object NodeActor {
 }
 
 class NodeActor(helpActor: ActorRef) extends Actor with ActorLogging {
-  val name : String = self.path.name
+  val name: String = self.path.name
 
   def receive = LoggingReceive {
     case "hello" => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello"
@@ -32,21 +32,21 @@ class NodeActor(helpActor: ActorRef) extends Actor with ActorLogging {
     case "greetings" => if (Controller.greenLight(sender().path.name, helpActor.path.name, "greetings")) helpActor tell ("greetings", sender())
   }
 
-  def receiveOther : Receive = LoggingReceive {
+  def receiveOther: Receive = LoggingReceive {
     case _ => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello"
   }
 
-  val receiveCommand : Receive = LoggingReceive {
+  val receiveCommand: Receive = LoggingReceive {
     case _ => if (Controller.greenLight(self.path.name, helpActor.path.name, "hello")) helpActor ! "hello"
   }
 
 }
 
 class SimpleDeliv {
-  val system : ActorSystem = ActorSystem("system")
+  val system: ActorSystem = ActorSystem("system")
 
   val helpActor: ActorRef = system.actorOf(HelpActor.props.withDispatcher(CallingThreadDispatcher.Id), "HelpActor")
-  val nodeActor : ActorRef = system.actorOf(Props(classOf[NodeActor], helpActor).withDispatcher(CallingThreadDispatcher.Id), "nodeActor")
+  val nodeActor: ActorRef = system.actorOf(Props(classOf[NodeActor], helpActor).withDispatcher(CallingThreadDispatcher.Id), "nodeActor")
 
   if (Controller.greenLight("deadLetters", nodeActor.path.name, "hello")) nodeActor ! "hello"
   if (Controller.greenLight("deadLetters", nodeActor.path.name, "hello")) nodeActor.tell("hello", system.deadLetters)

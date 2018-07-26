@@ -21,7 +21,7 @@ object Evaluator {
 
     val tempFormula = new Formula
     val correctness = forwardStep(prog, Set.empty)
-    val input : Source = Source.fromFile("ldfi-akka/logs.log")
+    val input = Source.fromFile("ldfi-akka/logs.log")
 
     if (!correctness) {
       sys.error("Error. Forwardstep: running main program: " + prog.mainClass.getName + ", " +

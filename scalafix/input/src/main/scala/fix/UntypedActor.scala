@@ -23,7 +23,7 @@ object NodeActor {
 }
 
 class NodeActor(helpActor: ActorRef) extends Actor {
-  val name : String = self.path.name
+  val name: String = self.path.name
 
   def receive = {
     case "hello" => helpActor ! "hello"
@@ -31,21 +31,21 @@ class NodeActor(helpActor: ActorRef) extends Actor {
     case "greetings" => helpActor forward "greetings"
   }
 
-  def receiveOther : Receive = {
+  def receiveOther: Receive = {
     case _ => helpActor ! "hello"
   }
 
-  val receiveCommand : Receive = {
+  val receiveCommand: Receive = {
     case _ => helpActor ! "hello"
   }
 
 }
 
 class SimpleDeliv {
-  val system : ActorSystem = ActorSystem("system")
+  val system: ActorSystem = ActorSystem("system")
 
   val helpActor: ActorRef = system.actorOf(HelpActor.props, "HelpActor")
-  val nodeActor : ActorRef = system.actorOf(Props(classOf[NodeActor], helpActor), "nodeActor")
+  val nodeActor: ActorRef = system.actorOf(Props(classOf[NodeActor], helpActor), "nodeActor")
 
   nodeActor ! "hello"
   nodeActor.tell("hello", system.deadLetters)
