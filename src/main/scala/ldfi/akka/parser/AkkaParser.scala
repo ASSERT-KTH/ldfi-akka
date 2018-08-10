@@ -54,19 +54,8 @@ object AkkaParser {
     }
 
     //If same sender and recipient twice, then all messages have been cut in previous time step
-    else if(curSen == prevSen && prevRec == curRec){
-      val existsNextInjection = injections.collect {
-        case msg @ MessageLit(sen, _, t, _) if t == curTime + 1 && curSen != sen => msg
-      }.nonEmpty
-      //if there exists an injection at next step with a different actor,
-      // then we know that a different actor sent messages in between this message and the last one (but they were omitted)
-      if(existsNextInjection){
-        clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
-      }
-      else {
-        curTime
-      }
-    }
+    else if(curSen == prevSen && prevRec == curRec)
+      clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
 
     //default case, do not update clock
     else {
@@ -83,7 +72,7 @@ object AkkaParser {
     }
   }
 
-  def shouldTick(curSen: String, curRec: String, curTime: Int, curMsg: String, injections: List[Literal]) : Boolean = {
+  def shouldTick(curSen: String, curRec: String, curTime: Int, curMsg: String, injections: List[Literal]): Boolean = {
     val curMsgLit = MessageLit(curSen, curRec, curTime, curMsg)
     val injectionsAtCurTime = injections.collect { case msg @ MessageLit(_, _, t, _) if t == curTime => msg }
     //check if there are messages that has been injected by this sender at this time

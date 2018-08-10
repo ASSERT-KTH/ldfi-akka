@@ -15,7 +15,7 @@ import scala.io.Source
 
 object Main {
 
-  val basePath : String = System.getProperty("user.dir") + "/ldfi-akka/src/main/scala"
+  val basePath: String = System.getProperty("user.dir") + "/ldfi-akka/src/main/scala"
 
   def main(args: Array[String]): Unit = {
     val ctx = processOptions(args.toList, Context())
@@ -95,7 +95,7 @@ object Main {
       }
 
       val clazz = Class.forName(relativePath)
-      val methods : List[Method] = clazz.getDeclaredMethods.toList
+      val methods: List[Method] = clazz.getDeclaredMethods.toList
       val methodInst = methods.find(p => p.getName == methodName) match {
         case Some(meth) => meth
         case None => sys.error("Reflection error: could not find method: " + methodName + " in class: " + cls.getName)

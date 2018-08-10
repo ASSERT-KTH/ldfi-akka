@@ -96,7 +96,7 @@ object Evaluator {
         failureSpec.copy(cuts = failureSpec.cuts ++ hypcuts, crashes = failureSpec.crashes ++ hypcrashes)
 
       //perform the backward step to obtain the new CNF formula
-      val newHypotheses = backwardStep(formula, updatedFailureSpec, freePassMessages)
+      val newHypotheses = backwardStep(formula, updatedFailureSpec, freePassMessages, hypothesis)
 
       //call evaluator recursively for every hypothesis
       val result = newHypotheses.map { hypo =>
@@ -155,10 +155,13 @@ object Evaluator {
     correctness
   }
 
-  def backwardStep(formula: Formula, failureSpec: FailureSpec, freePassMsgs: List[String]): Set[Set[Literal]] = {
+  def backwardStep(formula: Formula,
+                   failureSpec: FailureSpec,
+                   freePassMsgs: List[String],
+                   hypothesis: Set[Literal]): Set[Set[Literal]] = {
     //Parse and format the program
-    val input : Source = Source.fromFile("ldfi-akka/logs.log")
-    val format = AkkaParser.parse(input, Set.empty, freePassMsgs)
+    val input = Source.fromFile("ldfi-akka/logs.log")
+    val format = AkkaParser.parse(input, hypothesis, freePassMsgs)
 
     //Convert the formattedlogs to CNF formula
     CNFConverter.run(format, formula)

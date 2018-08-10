@@ -82,7 +82,7 @@ goto(Busy)
 class FSMTest {
 
   def main(args: Array[String]): Unit = {
-    val system : ActorSystem = ActorSystem("system")
+    val system: ActorSystem = ActorSystem("system")
     val FSMActor: ActorRef = system.actorOf(Props[FSMActor].withDispatcher(CallingThreadDispatcher.Id), "FSM")
   }
 

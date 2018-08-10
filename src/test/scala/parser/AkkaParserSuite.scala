@@ -44,8 +44,11 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(1) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
-          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
+        val injections =
+          List(
+            MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+            MessageLit("B", "A", 2, "Broadcast(Some payload)"))
+        val res: FormattedLogs = AkkaParser.parse(src, injections.toSet, List("Start"))
         test("Testing AkkaParser, one messages sent with injection at first step & \"ghost\" time at step 2") {
           assert(res == FormattedLogs(List(Row("A", "B", 3, "Broadcast(Some payload)"))))
         }
@@ -58,8 +61,8 @@ class AkkaParserSuite extends FunSuite with Matchers {
         val src = Source.fromString(input)
         val res: FormattedLogs = AkkaParser.parse(src, Set.empty, List("Start"))
         test("Testing AkkaParser, two same messages sent to same actor with no injections") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
-            Row("A", "C", 1, "Broadcast(Some payload)"))))
+          val rows = List(Row("A", "C", 1, "Broadcast(Some payload)"), Row("A", "C", 2, "Broadcast(Some payload)"))
+          assert(res == FormattedLogs(rows))
         }
       case None => println("testLogs are empty at position " + 2)
     }
@@ -68,11 +71,14 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(2) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
-          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
+        val injections =
+          List(
+            MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+            MessageLit("B", "A", 2, "Broadcast(Some payload)"))
+        val res: FormattedLogs = AkkaParser.parse(src, injections.toSet, List("Start"))
         test("Testing AkkaParser, two same messages sent with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
-            Row("A", "C", 3, "Broadcast(Some payload)"))))
+          val rows = List(Row("A", "C", 1, "Broadcast(Some payload)"), Row("A", "C", 3, "Broadcast(Some payload)"))
+          assert(res == FormattedLogs(rows))
         }
       case None => println("testLogs are empty at position " + 2)
     }
@@ -121,14 +127,39 @@ class AkkaParserSuite extends FunSuite with Matchers {
     logs.lift(6) match {
       case Some(input) =>
         val src = Source.fromString(input)
-        val res: FormattedLogs = AkkaParser.parse(src, Set(MessageLit("A", "B", 1, "Broadcast(Some payload)"),
-          MessageLit("B", "A", 2, "Broadcast(Some payload)")), List("Start"))
-        test("Testing AkkaParser, same sender sent multiple messages " +
+        val injections =
+          List(
+            MessageLit("A", "B", 1, "Broadcast(Some payload)"),
+            MessageLit("B", "A", 2, "Broadcast(Some payload)"))
+        val res: FormattedLogs = AkkaParser.parse(src, injections.toSet, List("Start"))
+        test(
+          "Testing AkkaParser, same sender sent multiple messages " +
           "with injection at first step & \"ghost\" time at step 2") {
-          assert(res == FormattedLogs(List(Row("A", "C", 1, "Broadcast(Some payload)"),
-            Row("A", "D", 1, "Broadcast(Some payload)"), Row("A", "B", 3, "Broadcast(Some payload)"))))
+          val rows =
+            List(
+              Row("A", "C", 1, "Broadcast(Some payload)"),
+              Row("A", "D", 1, "Broadcast(Some payload)"),
+              Row("A", "B", 3, "Broadcast(Some payload)"))
+          assert(res == FormattedLogs(rows))
         }
       case None => println("testLogs are empty at position " + 6)
+    }
+
+    //B receives from A, B receives from A,  A receives from B, B receives from A
+    logs.lift(7) match {
+      case Some(input) =>
+        val src = Source.fromString(input)
+        val injections = List(MessageLit("B", "A", 3, "Broadcast(Some payload)"))
+        val res: FormattedLogs = AkkaParser.parse(src, injections.toSet, List("Start"))
+        test("Testing AkkaParser, same sender sent multiple messages with injection at third step") {
+          val rows =
+            List(
+              Row("A", "B", 1, "Broadcast(Some payload)"),
+              Row("A", "B", 2, "Broadcast(Some payload)"),
+              Row("A", "B", 4, "Broadcast(Some payload)"))
+          assert(res == FormattedLogs(rows))
+        }
+      case None => println("testLogs are empty at position " + 7)
     }
 
   }
@@ -178,7 +209,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
 
   test("Testing AkkaParser.parseMessage"){
 
-    val line : String = "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
+    val line: String = "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
     val message = AkkaParser.parseMessage(line)
 
     message shouldBe ("Broadcast(Somepayload)")

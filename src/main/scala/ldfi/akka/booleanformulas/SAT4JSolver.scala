@@ -78,7 +78,7 @@ object SAT4JSolver {
       else Set(head) ++ removeSuperSets(tail, entire)
   }
 
-  def printModels(models : Set[Set[Literal]]): Unit =  {
+  def printModels(models: Set[Set[Literal]]): Unit =  {
     for (model <- models) {
       print("\nFault injection: ")
       for (lit <- model) {
