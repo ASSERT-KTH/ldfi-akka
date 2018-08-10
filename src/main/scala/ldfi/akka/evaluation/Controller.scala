@@ -29,7 +29,9 @@ object Controller {
 
   def isInjected(sen: String, rec: String, injections: Set[Literal], time: Int, message: Any): Boolean = {
     val msg = MessageLit(sen, rec, time, message.toString)
-    val msgcut = injections.contains(msg)
+    val msgcut =
+      injections.collect { case m: MessageLit if sen == m.sender && rec == m.recipient && time == m.time => m }
+      .nonEmpty
 
     //nodes crashes if current time is greater or equal to injection time
     val senderCrashed = injections.collect{ case n @ Node(name, tme) if sen == name && tme <= time => n }.nonEmpty
