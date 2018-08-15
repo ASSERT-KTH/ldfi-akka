@@ -83,7 +83,8 @@ object Evaluator {
 
     println("\n\n**********************************************************************\n" +
       "New run with following injection hypothesis: " + hypothesis + "\n" +
-      "And the following failureSpec: " + failureSpec + "\n" +
+      "With the following failureSpec: <" + failureSpec.eot + "," + failureSpec.eff + "," + failureSpec.maxCrashes + ">" +
+      "\n And messages: " + failureSpec.messages.toList.sortWith(_.time < _.time) + "\n" +
       "**********************************************************************\n\n")
     val correct = forwardStep(prog, hypothesis)
 
@@ -97,9 +98,10 @@ object Evaluator {
 
       //perform the backward step to obtain the new CNF formula
       val newHypotheses = backwardStep(formula, updatedFailureSpec, freePassMessages, hypothesis)
+      val sortedHypotheses = newHypotheses.toList.sortWith(getLatestEvent(_) > getLatestEvent(_))
 
       //call evaluator recursively for every hypothesis
-      val result = newHypotheses.map { hypo =>
+      val result = sortedHypotheses.map { hypo =>
         evaluator(prog, freePassMessages, formula, updatedFailureSpec, hypo, solutions)
       }
       if (result.isEmpty) Map.empty
@@ -112,6 +114,7 @@ object Evaluator {
       solutions + (hypothesis -> failureSpec)
     }
   }
+
 
   def forwardStep(program: Program, hypothesis: Set[Literal]): Boolean = {
 
@@ -172,6 +175,7 @@ object Evaluator {
     hypotheses
   }
 
+  def getLatestEvent(sol: Set[Literal]): Int = sol.collect { case m: MessageLit => m.time case n: Node => n.time }.max
 
   def prettyPrintFailureSpecs(solutions: Map[Set[Literal], FailureSpec]): Unit = {
     println("\n\n" +
