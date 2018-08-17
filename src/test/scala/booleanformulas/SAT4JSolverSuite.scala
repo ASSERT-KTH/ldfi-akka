@@ -32,7 +32,8 @@ class SAT4JSolverSuite extends FunSuite with Matchers {
   //fpsec1
   test("Testing SAT4JSolver with fspec: <3, 2, 0>") {
     val failureSpec = FailureSpec(3, 2, 0, nodes, msgs, Set.empty, Set.empty)
-    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg2))
+    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg1),
+                                                            Set(msg2))
   }
 
   //fpsec2
@@ -44,19 +45,21 @@ class SAT4JSolverSuite extends FunSuite with Matchers {
                                                             Set(node2),
                                                             Set(node3),
                                                             Set(node4),
+                                                            Set(msg1),
                                                             Set(msg2))
   }
 
   //fpsec3
   test("Testing SAT4JSolver with fspec: <3, 1, 0>") {
     val failureSpec = FailureSpec(3, 1, 0, nodes, msgs, Set.empty, Set.empty)
-    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set.empty
+    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg2))
   }
 
   //fpsec4
   test("Testing SAT4JSolver with fspec: <3, 1, 1>") {
     val failureSpec = FailureSpec(3, 1, 1, nodes, msgs, Set.empty, Set.empty)
-    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(node1),
+    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg2),
+                                                            Set(node1),
                                                             Set(node2),
                                                             Set(node3),
                                                             Set(node4))
@@ -79,11 +82,11 @@ class SAT4JSolverSuite extends FunSuite with Matchers {
   }
 
   //fpsec7
-
   test("Testing SAT4JSolver with fspec: <3, 2, 1> with one node crashed") {
     val failureSpec =
       FailureSpec(3, 2, 1, nodes, msgs, Set(node1), Set.empty)
-    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg2),
+    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg1),
+                                                            Set(msg2),
                                                             Set(node2),
                                                             Set(node3),
                                                             Set(node4))
@@ -93,7 +96,8 @@ class SAT4JSolverSuite extends FunSuite with Matchers {
   test(
     "Testing SAT4JSolver with fspec: <3, 2, 1> with one node crash and msg cut") {
     val failureSpec = FailureSpec(3, 2, 1, nodes, msgs, Set(node1), Set(msg2))
-    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(node2),
+    SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg1),
+                                                            Set(node2),
                                                             Set(node3),
                                                             Set(node4))
   }
@@ -107,7 +111,7 @@ class SAT4JSolverSuite extends FunSuite with Matchers {
                                   nodes,
                                   msgs,
                                   Set(node1, node2, node3, node4),
-                                  Set(msg2))
+                                  Set(msg1, msg2))
     SAT4JSolver.solve(formula, failureSpec) shouldEqual Set.empty
   }
 
