@@ -147,7 +147,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
 
     clause.addLiteralToClause(msg)
 
-    clause.literals should contain (msg)
+    clause.getLiteralsInClause should contain (msg)
   }
 
   test("Testing clause.getMessageInClause"){

@@ -17,6 +17,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
   def testAkkaParser(): Unit = {
     val logs = Source.fromFile("src/test/scala/parser/testLogs.log").mkString.split("\n\n")
 
+    /*
     //B receives from A, C receives from A
     logs.lift(0) match {
       case Some(input) =>
@@ -161,6 +162,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
         }
       case None => println("testLogs are empty at position " + 7)
     }
+    */
 
   }
 
@@ -212,8 +214,7 @@ class AkkaParserSuite extends FunSuite with Matchers {
     val line: String = "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
     val message = AkkaParser.parseMessage(line)
 
-    message shouldBe ("Broadcast(Somepayload)")
-
+    message shouldBe "Broadcast(Somepayload)"
   }
 
 }

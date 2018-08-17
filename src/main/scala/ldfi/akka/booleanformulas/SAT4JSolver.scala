@@ -17,40 +17,53 @@ object SAT4JSolver {
     solver.setTimeout(60)
     //Sets are invariant in their type, thus Set[Node] not <: Set[Literal]: we convert to List[T+]
     val allNodes = formula.getAllNodes.toList
-    val allMessages = formula.getAllMessages
+    val allMessages = formula.getAllMessages.distinct
 
     val crashedNodes = failureSpec.crashes
     val cutMessages = failureSpec.cuts
 
     //Add clauses from cnf to solver
-    for(c <- formula.clauses){
-      val messagesLosses = c.literals collect { case m:MessageLit => m }
-      val crashes = c.literals collect { case n:Node => n }
+    for (c <- formula.clauses) {
+      val messagesLosses = c.getMessagesInClause
+      val crashes = c.getNodesInClause
       val vecInts = convertLitsToVecInt(formula, messagesLosses ++ crashes)
       solver.addClause(vecInts)
     }
 
     //Set new nodes to crash
-    for(node <- allNodes){
+    for (node <- allNodes) {
+      //get the node literals activity range
       val (firstTime, lastTime) = formula.getActivityTimeRange(node.node)
-      val crashVars = (firstTime to lastTime).filter(x => formula.literalExistsInFormula(Node(node.node, x))).toArray
+      val crashVars = (firstTime to lastTime)
+        .filter(x => formula.literalExistsInFormula(Node(node.node, x)))
+        .toArray
       val dummy = solver.nextFreeVarId(true)
       solver.addExactly(new VecInt(crashVars ++ Seq(dummy * -1)), 1)
     }
 
     //If I have 0 maxcrashes, then no nodes can crash, otherwise atleast #nodes - maxcrashes don't crash
-    solver.addAtLeast(convertLitsToNegatedVecInt(formula, allNodes), allNodes.size - failureSpec.maxCrashes)
+    solver.addAtLeast(convertLitsToNegatedVecInt(formula, allNodes),
+                      allNodes.size - failureSpec.maxCrashes)
+
+    //The logical clock is reversed such that the "latest" messages are cut first. I.e, if we have
+    //M(A, B, 1) V M(A, B, 2) v M(A, B, 3) and EFF = 2, M(A, B, 1) and M(A, B, 2) are disallowed.
+    val nonAllowedMessageCuts =
+      allMessages.filter(failureSpec.eot - _.time >= failureSpec.eff)
 
     //nonAllowedMessageCuts, already cut messages and already crashed nodes are assumed
-    val nonAllowedMessageCuts = allMessages.filter(_.time >= failureSpec.eff)
-    val assumptions = convertLitsToNegatedVecInt(formula, nonAllowedMessageCuts ++ cutMessages ++ crashedNodes)
+    val assumptions = convertLitsToNegatedVecInt(
+      formula,
+      nonAllowedMessageCuts ++ cutMessages ++ crashedNodes)
 
     val modelIterator = new ModelIterator(solver)
     val models = ListBuffer[Set[Literal]]()
 
-    while(modelIterator.isSatisfiable(assumptions)){
-      val currentModel = modelIterator.model().filter(i => i > 0 && i <= formula.getAllLiterals.size).
-        map(formula.getLiteral).toSet
+    while (modelIterator.isSatisfiable(assumptions)) {
+      val currentModel = modelIterator
+        .model()
+        .filter(i => i > 0 && i <= formula.getAllLiterals.size)
+        .map(formula.getLiteral)
+        .toSet
       models += currentModel
     }
 
@@ -60,36 +73,37 @@ object SAT4JSolver {
 
   }
 
-  def convertLitsToVecInt(formula: Formula, literal: List[Literal]): VecInt = {
-    val idList = literal.map(lit => formula.getLiteralId(lit))
+  def convertLitsToVecInt(formula: Formula, literals: List[Literal]): VecInt = {
+    val idList = literals.map(lit => formula.getLiteralId(lit))
     new VecInt(idList.toArray)
   }
 
-  def convertLitsToNegatedVecInt(formula: Formula, literal: List[Literal]): VecInt = {
-    val idList = literal.map(lit => formula.getLiteralId(lit) * -1)
+  def convertLitsToNegatedVecInt(formula: Formula,
+                                 literals: List[Literal]): VecInt = {
+    val idList = literals.map(lit => formula.getLiteralId(lit) * -1)
     new VecInt(idList.toArray)
   }
 
-  def removeSuperSets (models: List[Set[Literal]], entire: List[Set[Literal]]): Set[Set[Literal]] = models match {
-    case Nil => Set.empty
-    case head :: tail =>
-      val isSuperSet = entire.filter(_ != head).exists(m => m.subsetOf(head))
-      if(isSuperSet) removeSuperSets(tail, entire)
-      else Set(head) ++ removeSuperSets(tail, entire)
-  }
+  def removeSuperSets(models: List[Set[Literal]],
+                      entire: List[Set[Literal]]): Set[Set[Literal]] =
+    models match {
+      case Nil => Set.empty
+      case head :: tail =>
+        val isSuperSet = entire.filter(_ != head).exists(m => m.subsetOf(head))
+        if (isSuperSet) removeSuperSets(tail, entire)
+        else Set(head) ++ removeSuperSets(tail, entire)
+    }
 
-  def printModels(models: Set[Set[Literal]]): Unit =  {
+  def printModels(models: Set[Set[Literal]]): Unit = {
     for (model <- models) {
       print("\nFault injection: ")
       for (lit <- model) {
         lit match {
-          case n: Node => print (n + " ")
-          case m: MessageLit => print (m + " ")
+          case n: Node       => print(n + " ")
+          case m: MessageLit => print(m + " ")
         }
       }
     }
   }
 
-
 }
-

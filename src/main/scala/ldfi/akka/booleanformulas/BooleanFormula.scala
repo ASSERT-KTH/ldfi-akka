@@ -1,6 +1,5 @@
 package ldfi.akka.booleanformulas
 
-
 class Formula {
 
   //helper fields for later SAT-solving
@@ -27,17 +26,25 @@ class Formula {
 
   def addClause(clause: Clause): Unit = clauses = clause :: clauses
 
-  def getAllLiterals: Set[Literal] = clauses.flatMap(c => c.literals).toSet
+  def getAllLiterals: Set[Literal] =
+    clauses.flatMap(c => c.getLiteralsInClause).toSet
 
-  def getAllNodes: Set[Node] = clauses.flatMap(c => c.literals.collect { case n: Node => n }).toSet
+  def getAllNodes: Set[Node] =
+    clauses.flatMap(c => c.getNodesInClause).sortWith(_.time > _.time).toSet
 
-  def getAllMessages: List[MessageLit] = clauses.flatMap(c => c.literals.collect { case msg: MessageLit => msg })
+  def getAllMessages: List[MessageLit] =
+    clauses
+      .flatMap(c => c.getMessagesInClause)
+      .sortWith(_.time > _.time)
+      .distinct
 
-  def literalExistsInFormula(literal: Literal): Boolean = literalsToId.contains(literal)
+  def literalExistsInFormula(literal: Literal): Boolean =
+    literalsToId.contains(literal)
 
   def idExistsInLiteralsToId(id: Int): Boolean = idToLiterals.contains(id)
 
-  def litExistsInIdToLiterals(literal: Literal): Boolean = literalsToId.contains(literal)
+  def litExistsInIdToLiterals(literal: Literal): Boolean =
+    literalsToId.contains(literal)
 
   def getLitIdCnt: Int = literalId
 
@@ -46,37 +53,42 @@ class Formula {
   def getActivityTimeRange(node: String): (Int, Int) = {
     activityTimeRange.get(node) match {
       case Some(actRange) => actRange
-      case None => sys.error("Solver: Node doesn't have any activity. " + node)
+      case None           => sys.error("Solver: Node doesn't have any activity. " + node)
     }
   }
 
   def getLiteralId(literal: Literal): Int = {
     literalsToId.get(literal) match {
       case Some(id) => id
-      case None => sys.error("Literal: " + literal + ", does not exist in hashmap literalsToId")
+      case None =>
+        sys.error(
+          "Literal: " + literal + ", does not exist in hashmap literalsToId")
     }
   }
 
   def getLiteral(literalId: Int): Literal = {
     idToLiterals.get(literalId) match {
       case Some(literal) => literal
-      case None => sys.error("Literalid: " + literalId + ", does not exist in hashmap idToLiterals")
+      case None =>
+        sys.error(
+          "Literalid: " + literalId + ", does not exist in hashmap idToLiterals")
     }
   }
 
   def updateLatestTime(literal: Literal): Unit = literal match {
-    case Node(_, time) => if (time > latestTime) latestTime = time
+    case Node(_, time)             => if (time > latestTime) latestTime = time
     case MessageLit(_, _, time, _) => if (time > latestTime) latestTime = time
   }
 
   def updateSenderTime(literal: Literal): Unit = {
     literal match {
-      case n@Node(id, time) => //DO NOTHING
-      case m@MessageLit(sender, recipient, time, _) =>
+      case n @ Node(id, time) => //DO NOTHING
+      case m @ MessageLit(sender, recipient, time, _) =>
         firstMessageSent.get(sender) match {
-          case Some(storedtime) if time > storedtime => firstMessageSent += (sender -> time)
+          case Some(storedtime) if time > storedtime =>
+            firstMessageSent += (sender -> time)
           case Some(storedtime) if time <= storedtime => // Do nothing
-          case None => firstMessageSent += (sender -> time)
+          case None                                   => firstMessageSent += (sender -> time)
         }
     }
   }
@@ -113,11 +125,22 @@ class Clause(formula: Formula) {
     literals = literal :: literals
   }
 
-  def getMessagesInClause: List[MessageLit] = literals.collect { case m: MessageLit => m }
+  def getLiteralsInClause: List[Literal] = {
+    def getTimeFromLit(lit: Literal): Int = lit match {
+      case m: MessageLit => m.time
+      case n: Node       => n.time
+    }
+    literals.sortWith(getTimeFromLit(_) > getTimeFromLit(_))
+  }
 
-  def getNodesInClause: Set[Node] = literals.collect { case n: Node => n }.toSet
+  def getMessagesInClause: List[MessageLit] =
+    literals.collect { case m: MessageLit => m }.sortWith(_.time > _.time)
 
-  def literalExistsInClause(literal: Literal): Boolean = literals.contains(literal)
+  def getNodesInClause: Set[Node] =
+    literals.collect { case n: Node => n }.sortWith(_.time > _.time).toSet
+
+  def literalExistsInClause(literal: Literal): Boolean =
+    literals.contains(literal)
 
 }
 
@@ -125,7 +148,8 @@ sealed trait Literal extends Formula
 
 final case class Node(node: String, time: Int) extends Literal
 
-final case class MessageLit(sender: String, recipient: String, time: Int, message: String) extends Literal
-
-
-
+final case class MessageLit(sender: String,
+                            recipient: String,
+                            time: Int,
+                            message: String)
+    extends Literal
