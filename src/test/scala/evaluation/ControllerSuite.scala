@@ -7,7 +7,6 @@ import org.scalatest.FunSuite
 class ControllerSuite extends FunSuite {
 
   testcheckInjections()
-  testgetCurrentTime()
 
   def testcheckInjections(): Unit = {
 
@@ -51,13 +50,6 @@ class ControllerSuite extends FunSuite {
     }
   }
 
-  def testgetCurrentTime(): Unit = {
-    val curSen = "A"
-    val curRec = "B"
 
-    test("testing getCurrentTime") {
-      assert(manageClock(curSen, curRec) == 1)
-    }
-  }
 
 }

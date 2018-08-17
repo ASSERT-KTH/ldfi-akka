@@ -5,8 +5,6 @@ import ldfi.akka.booleanformulas._
 import ldfi.akka.booleanformulas.SAT4JSolver
 import org.scalatest.{FunSuite, Matchers}
 
-import scala.collection.mutable.ListBuffer
-
 class SAT4JSolverSuite extends FunSuite with Matchers {
 
   val formula = new Formula
@@ -32,7 +30,7 @@ class SAT4JSolverSuite extends FunSuite with Matchers {
     * M(A, B, 1) ∨ M(B, C, 2) ∨ P(A, 1) ∨ P(B, 1) ∨ P(B, 2) v P(C, 2)
     * ************************************************************/
   //fpsec1
-  test("Testing SAT4jSolver with fspec: <3, 2, 0>") {
+  test("Testing SAT4JSolver with fspec: <3, 2, 0>") {
     val failureSpec = FailureSpec(3, 2, 0, nodes, msgs, Set.empty, Set.empty)
     SAT4JSolver.solve(formula, failureSpec) shouldEqual Set(Set(msg2))
   }

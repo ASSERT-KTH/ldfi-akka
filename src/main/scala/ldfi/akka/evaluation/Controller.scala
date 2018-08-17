@@ -1,29 +1,30 @@
 package ldfi.akka.evaluation
 
-import akka.actor._
 import ldfi.akka.booleanformulas._
 
 object Controller {
-  private var infoHolder: infoHolder = new infoHolder
   private var injections: Set[Literal] = Set.empty
 
-  private class infoHolder {
-    private var previousSender: String = _
+  object Clock {
     private var time: Int = 0
 
-    def tickClock(): Unit = time = time + 1
+    def tick(): Unit = time = time + 1
     def getTime: Int = time
-    def updateInfo(curSen: String): Unit = previousSender = curSen
-    def getPrev: String = previousSender
-
+    def reset(): Unit = time = 0
   }
 
   def greenLight(sender: String, recipient: String, message: Any): Boolean = {
 
-    val time = manageClock(sender, recipient)
-
+    val curTime = Clock.getTime
     //we do not give greenLight if message is cut or node is crashed
-    val greenLight = !isInjected(sender, recipient, injections, time, message)
+    val greenLight =
+      !isInjected(sender, recipient, injections, curTime + 1, message)
+
+    if (greenLight) {
+      //we only tick clock if message is not interjected, because it is not going to be witnessed by the parser.
+      Clock.tick()
+    }
+
     greenLight
   }
 
@@ -53,18 +54,8 @@ object Controller {
     isInjected
   }
 
-  def manageClock(curSen: String, curRec: String): Int = {
-    val prevSen = infoHolder.getPrev
-    //increment clock if new sender
-    if (curSen != prevSen)
-      infoHolder.tickClock()
-
-    infoHolder.updateInfo(curSen)
-    infoHolder.getTime
-  }
-
   def setInjections(injns: Set[Literal]): Unit = injections = injns
 
-  def reset(): Unit = infoHolder = new infoHolder
+  def reset(): Unit = Clock.reset()
 
 }

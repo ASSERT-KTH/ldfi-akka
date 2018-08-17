@@ -11,12 +11,10 @@ object AkkaParser {
 
     def tick(): Unit = time = time + 1
     def getTime: Int = time
-    def setTime(newTime: Int): Unit = time = newTime
     def reset(): Unit = time = 0
   }
 
   def parse(input: Source,
-            injections: Set[Literal],
             freePassMsgs: List[String]): FormattedLogs = {
     Clock.reset()
     var formattedLogs = ListBuffer[Row]()
@@ -35,14 +33,8 @@ object AkkaParser {
 
       //only add messages that are part of the analysis
       if (isNotFreePass) {
-        val time = manageClock(currentSender,
-                               currentRecipient,
-                               previousSender,
-                               previousRecipient,
-                               Clock.getTime,
-                               currentMessage,
-                               injections.toList)
-        Clock.setTime(time)
+        Clock.tick()
+        val time = Clock.getTime
         previousSender = currentSender
         previousRecipient = currentRecipient
         formattedLogs += Row(currentSender,
@@ -53,64 +45,6 @@ object AkkaParser {
     }
     val format = FormattedLogs(formattedLogs.toList)
     format
-  }
-
-  def manageClock(curSen: String,
-                  curRec: String,
-                  prevSen: String,
-                  prevRec: String,
-                  curTime: Int,
-                  curMsg: String,
-                  injections: List[Literal]): Int = {
-    //if new sender, increment clock
-    if (curSen != prevSen) {
-      clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
-    }
-
-    //same sender, but not all messages has been cut
-    else if (curSen == prevSen && prevRec != curRec) {
-      clockIterator(curSen, curRec, curTime, curMsg, injections)
-    }
-
-    //If same sender and recipient twice, then all messages have been cut in previous time step
-    else if (curSen == prevSen && prevRec == curRec)
-      clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
-
-    //default case, do not update clock
-    else {
-      curTime
-    }
-  }
-
-  def clockIterator(curSen: String,
-                    curRec: String,
-                    curTime: Int,
-                    curMsg: String,
-                    injections: List[Literal]): Int = {
-    if (shouldTick(curSen, curRec, curTime, curMsg, injections)) {
-      clockIterator(curSen, curRec, curTime + 1, curMsg, injections)
-    } else {
-      curTime
-    }
-  }
-
-  def shouldTick(curSen: String,
-                 curRec: String,
-                 curTime: Int,
-                 curMsg: String,
-                 injections: List[Literal]): Boolean = {
-    val curMsgLit = MessageLit(curSen, curRec, curTime, curMsg)
-    val injectionsAtCurTime = injections.collect {
-      case msg @ MessageLit(_, _, t, _) if t == curTime => msg
-    }
-    //check if there are messages that has been injected by this sender at this time
-    val sameInjectionSender = injectionsAtCurTime.exists(_.sender == curSen)
-    val isInjected = injectionsAtCurTime.contains(curMsgLit)
-
-    //The parser will not realize that some messages have been cut. This has to be corrected for when managing
-    //the logical clock
-    val res = injectionsAtCurTime.nonEmpty && (!sameInjectionSender | (sameInjectionSender && isInjected))
-    res
   }
 
   def parseSender(line: String): String = {
