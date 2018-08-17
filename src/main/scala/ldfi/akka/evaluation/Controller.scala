@@ -27,26 +27,36 @@ object Controller {
     greenLight
   }
 
-  def isInjected(sen: String, rec: String, injections: Set[Literal], time: Int, message: Any): Boolean = {
+  def isInjected(sen: String,
+                 rec: String,
+                 injections: Set[Literal],
+                 time: Int,
+                 message: Any): Boolean = {
     val msg = MessageLit(sen, rec, time, message.toString)
     val msgcut =
-      injections.collect { case m: MessageLit if sen == m.sender && rec == m.recipient && time == m.time => m }
-      .nonEmpty
+      injections.collect {
+        case m: MessageLit
+            if sen == m.sender && rec == m.recipient && time == m.time =>
+          m
+      }.nonEmpty
 
     //nodes crashes if current time is greater or equal to injection time
-    val senderCrashed = injections.collect{ case n @ Node(name, tme) if sen == name && tme <= time => n }.nonEmpty
-    val recipientCrashed = injections.collect{ case n @ Node(name, tme) if rec == name && tme <= time => n }.nonEmpty
+    val senderCrashed = injections.collect {
+      case n @ Node(name, tme) if sen == name && tme <= time => n
+    }.nonEmpty
+    val recipientCrashed = injections.collect {
+      case n @ Node(name, tme) if rec == name && tme <= time => n
+    }.nonEmpty
 
     //We send OK if the message is not omitted and neither node is crashed
     val isInjected = msgcut || senderCrashed || recipientCrashed
     isInjected
   }
 
-
   def manageClock(curSen: String, curRec: String): Int = {
     val prevSen = infoHolder.getPrev
     //increment clock if new sender
-    if(curSen != prevSen)
+    if (curSen != prevSen)
       infoHolder.tickClock()
 
     infoHolder.updateInfo(curSen)
@@ -58,5 +68,3 @@ object Controller {
   def reset(): Unit = infoHolder = new infoHolder
 
 }
-
-

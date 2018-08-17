@@ -5,14 +5,14 @@ import ldfi.akka.booleanformulas._
 
 class BooleanFormulasSuite extends FunSuite with Matchers {
 
-  test("Testing addclause"){
-      val formula = new Formula
-      val clause = new Clause(formula)
-      formula.addClause(clause)
-      formula.clauses should contain (clause)
-    }
+  test("Testing addclause") {
+    val formula = new Formula
+    val clause = new Clause(formula)
+    formula.addClause(clause)
+    formula.clauses should contain(clause)
+  }
 
-  test("Testing formula.getAllLiterals"){
+  test("Testing formula.getAllLiterals") {
     val msg1 = MessageLit("A", "B", 1, "")
     val node1 = Node("A", 1)
     val node2 = Node("B", 1)
@@ -23,22 +23,23 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
 
     val (formula, _, _, _) = generateFormula()
 
-    formula.getAllLiterals should be (Set(msg1, node1, node2, msg2, node3, node4))
+    formula.getAllLiterals should be(
+      Set(msg1, node1, node2, msg2, node3, node4))
   }
 
-  test("Testing formula.getAllNodes"){
+  test("Testing formula.getAllNodes") {
     val (formula, _, nodes, _) = generateFormula()
 
-    formula.getAllNodes should be (nodes.toSet)
+    formula.getAllNodes should be(nodes.toSet)
   }
 
-  test("Testing formula.getAllMessages"){
+  test("Testing formula.getAllMessages") {
     val (formula, _, _, messages) = generateFormula()
 
-    formula.getAllMessages.toSet should be (messages.toSet)
+    formula.getAllMessages.toSet should be(messages.toSet)
   }
 
-  test("Testing formula.literalExistsInFormula"){
+  test("Testing formula.literalExistsInFormula") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
@@ -49,7 +50,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     formula.literalExistsInFormula(msg)
   }
 
-  test("Testing formula.idExistsInLieteralsToId"){
+  test("Testing formula.idExistsInLieteralsToId") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
@@ -61,7 +62,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     formula.idExistsInLiteralsToId(1)
   }
 
-  test("Testing formula.litExistsInIdToLiterals"){
+  test("Testing formula.litExistsInIdToLiterals") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
@@ -79,7 +80,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.addLiteralToClause(msg)
 
     //since only one lit, next litidcnt should be 2
-    formula.getLitIdCnt should be (2)
+    formula.getLitIdCnt should be(2)
   }
 
   test("Testing formula.getLatestTime") {
@@ -90,12 +91,10 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.addLiteralToClause(msg)
 
     //since only one message, latest time should be 1
-    formula.getLatestTime should be (1)
+    formula.getLatestTime should be(1)
   }
 
-
-
-  test("Testing formula.getActivityTimeRange"){
+  test("Testing formula.getActivityTimeRange") {
     val formula = new Formula
     val clause = new Clause(formula)
 
@@ -106,17 +105,17 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.addLiteralToClause(act1)
     clause.addLiteralToClause(act2)
 
-    formula.getActivityTimeRange("A") should be ((1, 2))
+    formula.getActivityTimeRange("A") should be((1, 2))
   }
 
-  test("Testing formula.getLiteralId"){
+  test("Testing formula.getLiteralId") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
 
     clause.addLiteralToClause(msg)
     formula.addClause(clause)
-    formula.getLiteralId(msg) should be (1)
+    formula.getLiteralId(msg) should be(1)
   }
 
   test("Testing formula.updateActivityMap") {
@@ -128,29 +127,29 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     formula.activityTimeRange should contain allOf ("A" -> (1, 1), "B" -> (1, 1))
   }
 
-  test("Testing formula.updateSenderTime"){
+  test("Testing formula.updateSenderTime") {
     val formula = new Formula
     val msg1 = MessageLit("A", "B", 1, "")
     val msg2 = MessageLit("A", "B", 2, "")
 
     formula.updateSenderTime(msg1)
-    formula.firstMessageSent.get("A") should be (Some(1))
+    formula.firstMessageSent.get("A") should be(Some(1))
 
     formula.updateSenderTime(msg2)
-    formula.firstMessageSent.get("A") should be (Some(2))
+    formula.firstMessageSent.get("A") should be(Some(2))
   }
 
-  test("Testing clause.addLiteralToClause"){
+  test("Testing clause.addLiteralToClause") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
 
     clause.addLiteralToClause(msg)
 
-    clause.literals should contain (msg)
+    clause.literals should contain(msg)
   }
 
-  test("Testing clause.getMessageInClause"){
+  test("Testing clause.getMessageInClause") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
@@ -162,7 +161,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.getMessagesInClause should contain only msg
   }
 
-  test("Testing clause.getLiteralInClause"){
+  test("Testing clause.getLiteralInClause") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
@@ -174,7 +173,7 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
     clause.getNodesInClause should contain only node
   }
 
-  test("Testing clause.literalExistsInClause"){
+  test("Testing clause.literalExistsInClause") {
     val formula = new Formula
     val clause = new Clause(formula)
     val msg = MessageLit("A", "B", 1, "")
@@ -187,12 +186,12 @@ class BooleanFormulasSuite extends FunSuite with Matchers {
   }
 
   //helper function
-  def generateFormula(): (Formula, List[Clause], List[Node], List[MessageLit]) = {
+  def generateFormula()
+    : (Formula, List[Clause], List[Node], List[MessageLit]) = {
 
     val msg1 = MessageLit("A", "B", 1, "")
     val node1 = Node("A", 1)
     val node2 = Node("B", 1)
-
 
     val msg2 = MessageLit("C", "D", 1, "")
     val node3 = Node("C", 1)

@@ -6,7 +6,7 @@ object CNFConverter {
 
   def run(formattedLog: FormattedLogs, formula: Formula): Unit = {
     val clause = new Clause(formula)
-    for (line <- formattedLog.rows){
+    for (line <- formattedLog.rows) {
       addRowToClause(clause, line)
     }
     //prettyPrintClause(clause)
@@ -15,13 +15,13 @@ object CNFConverter {
 
   def addRowToClause(clause: Clause, line: Row): Unit = {
     val messageLiteral = getMessage(line)
-    val senderNodeLiteral  = getSenderNode(line)
+    val senderNodeLiteral = getSenderNode(line)
     val recipientNodeLiteral = getRecipientNode(line)
 
-    if(!clause.literalExistsInClause(senderNodeLiteral))
+    if (!clause.literalExistsInClause(senderNodeLiteral))
       clause.addLiteralToClause(senderNodeLiteral)
 
-    if(!clause.literalExistsInClause(recipientNodeLiteral))
+    if (!clause.literalExistsInClause(recipientNodeLiteral))
       clause.addLiteralToClause(recipientNodeLiteral)
 
     //all messages are unique
@@ -32,17 +32,21 @@ object CNFConverter {
 
   def getRecipientNode(line: Row): Node = Node(line.recipient, line.time)
 
-  def getMessage(line: Row): MessageLit = MessageLit(line.sender, line.recipient, line.time, line.message)
+  def getMessage(line: Row): MessageLit =
+    MessageLit(line.sender, line.recipient, line.time, line.message)
 
   def prettyPrintClause(clause: Clause): Unit = {
-    for((literal, cnt) <- clause.literals.zipWithIndex){
+    for ((literal, cnt) <- clause.literals.zipWithIndex) {
       literal match {
         case Node(node, time) => print("P(" + node + ", " + time + ")")
         case MessageLit(sender, recipient, time, message) =>
-          print("M(" + sender + ", " + recipient + ", " + time + ", " + message + ")")
-        case _ => println("ERROR in CNFConverter.prettyPrintClause: literal not Node or Message!")
+          print(
+            "M(" + sender + ", " + recipient + ", " + time + ", " + message + ")")
+        case _ =>
+          println(
+            "ERROR in CNFConverter.prettyPrintClause: literal not Node or Message!")
       }
-      if(cnt != clause.literals.size - 1){
+      if (cnt != clause.literals.size - 1) {
         print(" V ")
       }
     }
@@ -50,15 +54,14 @@ object CNFConverter {
 
   def prettyPrintFormula(formula: Formula): Unit = {
     println("\n\nBoolean Formula:")
-    for ((clause, cnt) <- formula.clauses.zipWithIndex){
+    for ((clause, cnt) <- formula.clauses.zipWithIndex) {
       print("(")
       prettyPrintClause(clause)
-      if(cnt < formula.clauses.size - 1){
+      if (cnt < formula.clauses.size - 1) {
         print(") ∧\n")
       }
     }
-    print (")")
+    print(")")
   }
 
 }
-

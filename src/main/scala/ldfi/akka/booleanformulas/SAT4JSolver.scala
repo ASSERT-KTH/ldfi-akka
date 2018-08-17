@@ -41,8 +41,11 @@ object SAT4JSolver {
     //If I have 0 maxcrashes, then no nodes can crash, otherwise atleast #nodes - maxcrashes don't crash
     solver.addAtLeast(convertLitsToNegatedVecInt(formula, allNodes), allNodes.size - failureSpec.maxCrashes)
 
-    //nonAllowedMessageCuts, already cut messages and already crashed nodes are assumed
-    val nonAllowedMessageCuts = allMessages.filter(_.time >= failureSpec.eff)
+    //The logical clock is reversed such that the "latest" messages are cut first. I.e, if we have
+    //M(A, B, 1) V M(A, B, 2) v M(A, B, 3) and EFF = 2, M(A, B, 1) and M(A, B, 2) are disallowed.
+    val nonAllowedMessageCuts =
+    allMessages.filter(failureSpec.eot - _.time >= failureSpec.eff)
+
     val assumptions = convertLitsToNegatedVecInt(formula, nonAllowedMessageCuts ++ cutMessages ++ crashedNodes)
 
     val modelIterator = new ModelIterator(solver)
