@@ -33,15 +33,15 @@ object CNFConverter {
   def getRecipientNode(line: Row): Node = Node(line.recipient, line.time)
 
   def getMessage(line: Row): MessageLit =
-    MessageLit(line.sender, line.recipient, line.time, line.message)
+    MessageLit(line.sender, line.recipient, line.time)(line.message)
 
   def prettyPrintClause(clause: Clause): Unit = {
     for ((literal, cnt) <- clause.literals.zipWithIndex) {
       literal match {
         case Node(node, time) => print("P(" + node + ", " + time + ")")
-        case MessageLit(sender, recipient, time, message) =>
+        case MessageLit(sender, recipient, time) =>
           print(
-            "M(" + sender + ", " + recipient + ", " + time + ", " + message + ")")
+            "M(" + sender + ", " + recipient + ", " + time + ")")
         case _ =>
           println(
             "ERROR in CNFConverter.prettyPrintClause: literal not Node or Message!")
@@ -61,7 +61,7 @@ object CNFConverter {
         print(") ∧\n")
       }
     }
-    print(")")
+    print(")\n\n")
   }
 
 }

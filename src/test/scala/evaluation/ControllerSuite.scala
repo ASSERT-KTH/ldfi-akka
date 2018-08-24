@@ -2,54 +2,80 @@ package evaluation
 
 import ldfi.akka.booleanformulas._
 import ldfi.akka.evaluation.Controller._
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 
-class ControllerSuite extends FunSuite {
+class ControllerSuite extends FunSuite with Matchers {
 
-  testcheckInjections()
+  val msg: MessageLit = MessageLit("A", "B", 1)("")
+  val node1: Node = Node("A", 1)
+  val node2: Node = Node("B", 1)
+  val curSen: String = "A"
+  val curRec: String = "B"
 
-  def testcheckInjections(): Unit = {
-
-    val msg = MessageLit("A", "B", 1, "")
-    val node1 = Node("A", 1)
-    val node2 = Node("B", 1)
-    val curSen = "A"
-    val curRec = "B"
-
-    val inj1: Set[Literal] = Set.empty
-    test("testing checkInjection, is not injected") {
-      assert(!isInjected(curSen, curRec, inj1, 1, ""))
-    }
-
-    val inj2: Set[Literal] = Set(msg.asInstanceOf[Literal])
-    test("testing checkInjection, is injected") {
-      assert(isInjected(curSen, curRec, inj2, 1, ""))
-    }
-
-    val inj3: Set[Literal] = Set(node1.asInstanceOf[Literal])
-    test("testing checkInjection, sender crashed") {
-      assert(isInjected(curSen, curRec, inj3, 1, ""))
-    }
-
-    val inj4: Set[Literal] = Set(node2.asInstanceOf[Literal])
-    test("testing checkInjection, recipient crashed") {
-      assert(isInjected(curSen, curRec, inj4, 1, ""))
-    }
-
-    val inj5: Set[Literal] =
-      Set(node1.asInstanceOf[Literal], node2.asInstanceOf[Literal])
-    test("testing checkInjection, both nodes crashed") {
-      assert(isInjected(curSen, curRec, inj5, 1, ""))
-    }
-
-    val inj6: Set[Literal] = Set(msg.asInstanceOf[Literal],
-                                 node1.asInstanceOf[Literal],
-                                 node2.asInstanceOf[Literal])
-    test("testing checkInjection, msg cut & both crashed") {
-      assert(isInjected(curSen, curRec, inj6, 1, ""))
-    }
+  test("testing Controller.isInjected, is not injected") {
+    val inj: Set[Literal] = Set.empty
+    assert(!isInjected(curSen, curRec, inj, 1, ""))
   }
 
+  test("testing Controller.isInjected, is injected") {
+    val inj: Set[Literal] = Set(msg.asInstanceOf[Literal])
+    assert(isInjected(curSen, curRec, inj, 1, ""))
+  }
 
+  test("testing Controller.isInjected, sender crashed") {
+    val inj: Set[Literal] = Set(node1.asInstanceOf[Literal])
+    assert(isInjected(curSen, curRec, inj, 1, ""))
+  }
+
+  test("testing Controller.isInjected, recipient crashed") {
+    val inj: Set[Literal] = Set(node2.asInstanceOf[Literal])
+    assert(isInjected(curSen, curRec, inj, 1, ""))
+  }
+
+  test("testing Controller.isInjected, both nodes crashed") {
+    val inj: Set[Literal] =
+      Set(node1.asInstanceOf[Literal], node2.asInstanceOf[Literal])
+    assert(isInjected(curSen, curRec, inj, 1, ""))
+  }
+
+  test("testing Controller.isInjected, msg cut & both crashed") {
+    val inj: Set[Literal] = Set(msg.asInstanceOf[Literal],
+                                node1.asInstanceOf[Literal],
+                                node2.asInstanceOf[Literal])
+    assert(isInjected(curSen, curRec, inj, 1, ""))
+  }
+
+  //Potentially needs some more edge-cases.
+  test("testing Controller.manageClock") {
+    val formula = new Formula
+    val c1 = new Clause(formula)
+    val c2 = new Clause(formula)
+
+    val m1 = MessageLit("A", "B", 1)("")
+    val m2 = MessageLit("B", "C", 2)("")
+    val m3 = MessageLit("C", "D", 3)("")
+    val m4 = MessageLit("C", "D", 2)("")
+
+    val m1tom3 = List(m1, m2, m3)
+    m1tom3.foreach(c1.addLiteralToClause)
+
+    val m1andmr = List(m1, m4)
+    m1andmr.foreach(c2.addLiteralToClause)
+
+    //c1 gets id 1 and c2 and 2
+    formula.addClause(c1)
+    formula.addClause(c2)
+
+    val clauses = List(c1, c2)
+
+    manageClock("A", "B", "", clauses, Map(1 -> 0, 2 -> 0)) shouldEqual Map(
+      1 -> 1,
+      2 -> 1)
+
+    manageClock("C", "D", "", clauses, Map(1 -> 1, 2 -> 1)) shouldEqual Map(
+      1 -> 3,
+      2 -> 2)
+
+  }
 
 }

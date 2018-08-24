@@ -3,29 +3,29 @@ package ldfi.akka.evaluation
 import ldfi.akka.booleanformulas._
 
 object Controller {
+
   private var injections: Set[Literal] = Set.empty
-
-  object Clock {
-    private var time: Int = 0
-
-    def tick(): Unit = time = time + 1
-    def getTime: Int = time
-    def reset(): Unit = time = 0
-  }
+  private var formula: Formula = new Formula
+  private var clauseClock: Map[Int, Int] = Map.empty
 
   def greenLight(sender: String, recipient: String, message: Any): Boolean = {
 
-    val curTime = Clock.getTime
-    //we do not give greenLight if message is cut or node is crashed
-    val greenLight =
-      !isInjected(sender, recipient, injections, curTime + 1, message)
+    if (injections.nonEmpty) {
+      clauseClock = manageClock(sender,
+                                recipient,
+                                message.toString,
+                                formula.clauses,
+                                clauseClock)
 
-    if (greenLight) {
-      //we only tick clock if message is not interjected, because it is not going to be witnessed by the parser.
-      Clock.tick()
+      val greenLight = clauseClock.forall {
+        case (cId, time) =>
+          !isInjected(sender, recipient, injections, time, message)
+      }
+      greenLight
+    } else {
+      true
     }
 
-    greenLight
   }
 
   def isInjected(sen: String,
@@ -33,7 +33,8 @@ object Controller {
                  injections: Set[Literal],
                  time: Int,
                  message: Any): Boolean = {
-    val msg = MessageLit(sen, rec, time, message.toString)
+    val msg = MessageLit(sen, rec, time)(message.toString)
+
     val msgcut =
       injections.collect {
         case m: MessageLit
@@ -49,13 +50,61 @@ object Controller {
       case n @ Node(name, tme) if rec == name && tme <= time => n
     }.nonEmpty
 
+    //If message has been injected, remove it from the injections set
+    if (msgcut) {
+      this.injections = injections.filter {
+        case m: MessageLit => m != msg
+        case n: Node       => true
+      }
+    }
+
     //We send OK if the message is not omitted and neither node is crashed
     val isInjected = msgcut || senderCrashed || recipientCrashed
     isInjected
   }
 
-  def setInjections(injns: Set[Literal]): Unit = injections = injns
+  def manageClock(sender: String,
+                  recipient: String,
+                  message: String,
+                  clauses: List[Clause],
+                  clauseClock: Map[Int, Int]): Map[Int, Int] = {
+    clauses
+      .map { c =>
+        val time = clauseClock.get(c.getId) match {
+          case Some(t) => t
+          case None =>
+            sys.error("Controller: could not find clauseId in clauseClock.")
+        }
 
-  def reset(): Unit = Clock.reset()
+        val potentialTime = time + 1
+        val msg = MessageLit(sender, recipient, potentialTime)(message)
+
+        if (c.literalExistsInClause(msg)) {
+          Map(c.getId -> potentialTime)
+        } else {
+          //get the first message where the sender is active and update clause clock to that time if such a message exists
+          val updatedTime = c.getMessagesInClauseAsc.collectFirst {
+            case msg: MessageLit if msg.sender == sender && msg.time > time =>
+              msg.time
+          }
+          updatedTime match {
+            case Some(t) => Map(c.getId -> t)
+            case None    => Map(c.getId -> time)
+          }
+        }
+
+      }
+      .reduceLeft(_ ++ _)
+
+  }
+
+  def setFormula(form: Formula): Unit = {
+    formula = form
+    form.clauses.foreach { c =>
+      clauseClock += c.getId -> 0
+    }
+  }
+
+  def setInjections(injns: Set[Literal]): Unit = injections = injns
 
 }

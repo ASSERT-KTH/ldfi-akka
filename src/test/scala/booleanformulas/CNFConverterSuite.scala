@@ -1,45 +1,28 @@
 package booleanformulas
 
 import ldfi.akka.booleanformulas._
-import ldfi.akka.booleanformulas._
 import ldfi.akka.parser.AkkaParser.Row
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 
-class CNFConverterSuite extends FunSuite {
+class CNFConverterSuite extends FunSuite with Matchers {
 
-  testaddLiteralsToClause()
-  testgetMessage()
-  testgetNode()
+  val formula: Formula = new Formula
+  val clause: Clause = new Clause(formula)
+  val row: Row = Row("A", "B", 1, "")
+  val msg: MessageLit = MessageLit("A", "B", 1)("")
 
-  def testaddLiteralsToClause(): Unit = {
-    val formula = new Formula
-    val clause = new Clause(formula)
-    val row = Row("A", "B", 1, "")
-    val msg = MessageLit("A", "B", 1, "")
-
+  test("Testing CNFConverter.addRowToClause"){
     CNFConverter.addRowToClause(clause, row)
-    test("testing addLiteralToClause"){
-      assert(formula.literalExistsInFormula(msg))
-    }
+    clause.getLiteralsInClause should contain (msg)
   }
 
-  def testgetMessage(): Unit = {
-    val row = Row("A", "B", 1, "")
-    val msg = CNFConverter.getMessage(row)
-    test("testing getMessage") {
-      assert(msg.sender == row.sender)
-      assert(msg.recipient == row.recipient)
-      assert(msg.time == row.time)
-    }
+  test("Testing CNFConverter.getMessage") {
+    CNFConverter.getMessage(row) shouldEqual MessageLit("A", "B", 1)("")
   }
 
-  def testgetNode(): Unit = {
-    val row = Row("A", "B", 1, "")
-    val msg = CNFConverter.getSenderNode(row)
-    test("testing getNode") {
-      assert(msg.node == row.sender)
-      assert(msg.time == row.time)
-    }
+  test("Testing CNFConverter.get(sender/recipient)Node") {
+    CNFConverter.getSenderNode(row) shouldEqual Node("A", 1)
+    CNFConverter.getRecipientNode(row) shouldEqual Node("B", 1)
   }
 
 }

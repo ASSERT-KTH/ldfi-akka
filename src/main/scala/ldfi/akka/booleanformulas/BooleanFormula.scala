@@ -8,6 +8,7 @@ class Formula {
   var firstMessageSent: Map[String, Int] = Map.empty
   var activityTimeRange: Map[String, (Int, Int)] = Map.empty
   var literalId = 1
+  var clauseId = 1
   var latestTime = 0
 
   var clauses: List[Clause] = List.empty
@@ -24,7 +25,17 @@ class Formula {
     }
   }
 
-  def addClause(clause: Clause): Unit = clauses = clause :: clauses
+  def addClause(clause: Clause): Unit = {
+    //only add clause if does not exist in formula
+    if (!clauseExistInFormula(clause)) {
+      clause.setId(clauseId)
+      clauseId = clauseId + 1
+      clauses = clause :: clauses
+    }
+  }
+
+  def clauseExistInFormula(clause: Clause): Boolean =
+    clauses.exists(c => clause.getLiteralsInClause == c.getLiteralsInClause)
 
   def getAllLiterals: Set[Literal] =
     clauses.flatMap(c => c.getLiteralsInClause).toSet
@@ -34,7 +45,7 @@ class Formula {
 
   def getAllMessages: List[MessageLit] =
     clauses
-      .flatMap(c => c.getMessagesInClause)
+      .flatMap(c => c.getMessagesInClauseDesc)
       .sortWith(_.time > _.time)
       .distinct
 
@@ -76,14 +87,14 @@ class Formula {
   }
 
   def updateLatestTime(literal: Literal): Unit = literal match {
-    case Node(_, time)             => if (time > latestTime) latestTime = time
-    case MessageLit(_, _, time, _) => if (time > latestTime) latestTime = time
+    case Node(_, time)          => if (time > latestTime) latestTime = time
+    case MessageLit(_, _, time) => if (time > latestTime) latestTime = time
   }
 
   def updateSenderTime(literal: Literal): Unit = {
     literal match {
       case n @ Node(id, time) => //DO NOTHING
-      case m @ MessageLit(sender, recipient, time, _) =>
+      case m @ MessageLit(sender, recipient, time) =>
         firstMessageSent.get(sender) match {
           case Some(storedtime) if time > storedtime =>
             firstMessageSent += (sender -> time)
@@ -96,7 +107,7 @@ class Formula {
   def updateActivityMap(literal: Literal): Unit = {
     literal match {
       case Node(id, currTime) => updateActivityMapHelper(id, currTime)
-      case MessageLit(sender, recipient, currTime, _) =>
+      case MessageLit(sender, recipient, currTime) =>
         updateActivityMapHelper(sender, currTime)
         updateActivityMapHelper(recipient, currTime)
     }
@@ -119,6 +130,11 @@ class Formula {
 
 class Clause(formula: Formula) {
   var literals: List[Literal] = List.empty
+  private var id: Int = 0
+
+  def setId(newID: Int): Unit = id = newID
+
+  def getId: Int = id
 
   def addLiteralToClause(literal: Literal): Unit = {
     formula.addLiteralToFormula(literal)
@@ -133,8 +149,12 @@ class Clause(formula: Formula) {
     literals.sortWith(getTimeFromLit(_) > getTimeFromLit(_))
   }
 
-  def getMessagesInClause: List[MessageLit] =
+  def getMessagesInClauseDesc: List[MessageLit] =
     literals.collect { case m: MessageLit => m }.sortWith(_.time > _.time)
+
+  def getMessagesInClauseAsc: List[MessageLit] =
+    literals.collect { case m: MessageLit => m }.sortWith(_.time < _.time)
+
 
   def getNodesInClause: Set[Node] =
     literals.collect { case n: Node => n }.sortWith(_.time > _.time).toSet
@@ -144,12 +164,10 @@ class Clause(formula: Formula) {
 
 }
 
-sealed trait Literal extends Formula
+sealed trait Literal
 
 final case class Node(node: String, time: Int) extends Literal
 
-final case class MessageLit(sender: String,
-                            recipient: String,
-                            time: Int,
-                            message: String)
+final case class MessageLit(sender: String, recipient: String, time: Int)(
+  val message: String)
   extends Literal

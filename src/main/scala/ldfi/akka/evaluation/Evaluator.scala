@@ -12,35 +12,35 @@ import scala.io.Source
 
 object Evaluator {
 
-  def evaluate(prog: Program, freePassMessages: List[String]): Unit = {
+  def evaluate(program: Program, freePassMessages: List[String]): Unit = {
 
     /************************************************
     Obtain a failure-free outcome of the program
       ************************************************/
-    val tempFormula = new Formula
-    val correctness = forwardStep(prog, Set.empty)
+    val initFormula = new Formula
+    val correctness = forwardStep(program, Set.empty, initFormula)
     val input = Source.fromFile("ldfi-akka/logs.log")
 
     if (!correctness) {
       sys.error(
-        "Error. Forwardstep: running main program: " + prog.mainClass.getName + ", " +
+        "Error. Forwardstep: running main program: " + program.mainClass.getName + ", " +
           "without failure injections violates the correctness specification")
     }
     //Format the program and convert it to CNF
     val format = AkkaParser.parse(input, freePassMessages)
     //Convert the formattedlogs to CNF formula
-    CNFConverter.run(format, tempFormula)
+    CNFConverter.run(format, initFormula)
 
     /************************************************
     Set initial failure spec and start evaluator
       ************************************************/
     //Initial failurespec from failure-free program
     val initFailureSpec = FailureSpec(
-      eot = tempFormula.getLatestTime + 1,
+      eot = initFormula.getLatestTime + 1,
       eff = 2,
       maxCrashes = 0,
-      nodes = tempFormula.getAllNodes.toSet,
-      messages = tempFormula.getAllMessages.toSet,
+      nodes = initFormula.getAllNodes,
+      messages = initFormula.getAllMessages.toSet,
       crashes = Set.empty,
       cuts = Set.empty
     )
@@ -49,12 +49,13 @@ object Evaluator {
 
     //start evaluator with init failure spec and empty hypothesis
     val solutions =
-      concreteEvaluator(prog,
-                        freePassMessages,
-                        formula,
-                        initFailureSpec,
-                        initFailureSpec,
-                        Set.empty)
+      concreteEvaluator(program,
+        freePassMessages,
+        formula,
+        initFailureSpec,
+        initFailureSpec,
+        Set.empty,
+        Set.empty)
 
     //Print Failure Injections
     prettyPrintFailureSpecs(solutions)
@@ -62,48 +63,53 @@ object Evaluator {
   }
 
   def concreteEvaluator(
-      program: Program,
-      freePassMessages: List[String],
-      formula: Formula,
-      currentFailureSpec: FailureSpec,
-      initFailureSpec: FailureSpec,
-      hypothesis: Set[Literal]): Map[Set[Literal], FailureSpec] =
+                         program: Program,
+                         freePassMessages: List[String],
+                         formula: Formula,
+                         currentFailureSpec: FailureSpec,
+                         initFailureSpec: FailureSpec,
+                         triedHypotheses: Set[Set[Literal]],
+                         hypothesis: Set[Literal]): Map[Set[Literal], FailureSpec] =
     evaluator(program,
-              freePassMessages,
-              formula,
-              currentFailureSpec,
-              hypothesis,
-              Map.empty) match {
-      case m: Map[Set[Literal], FailureSpec] if m.isEmpty =>
+      freePassMessages,
+      formula,
+      currentFailureSpec,
+      triedHypotheses,
+      hypothesis,
+      Map.empty) match {
+      case (m, allTriedHypos) if m.isEmpty =>
         if (currentFailureSpec.eff < currentFailureSpec.eot - 1) {
           val EFF = currentFailureSpec.eff
           concreteEvaluator(program,
-                            freePassMessages,
-                            new Formula,
-                            initFailureSpec.copy(eff = EFF + 1),
-                            initFailureSpec,
-                            hypothesis)
+            freePassMessages,
+            new Formula,
+            initFailureSpec.copy(eff = EFF + 1),
+            initFailureSpec,
+            triedHypotheses ++ allTriedHypos,
+            hypothesis)
         } else if (currentFailureSpec.maxCrashes < formula.getLatestTime - 1) {
           val maxCrashes = currentFailureSpec.maxCrashes
           concreteEvaluator(program,
-                            freePassMessages,
-                            new Formula,
-                            initFailureSpec.copy(maxCrashes = maxCrashes + 1),
-                            initFailureSpec,
-                            hypothesis)
+            freePassMessages,
+            new Formula,
+            initFailureSpec.copy(maxCrashes = maxCrashes + 1),
+            initFailureSpec,
+            triedHypotheses ++ allTriedHypos,
+            hypothesis)
         } else {
           Map.empty
         }
-      case solutions => solutions
+      case (solutions, _) => solutions
     }
 
   def evaluator(program: Program,
                 freePassMessages: List[String],
                 formula: Formula,
                 failureSpec: FailureSpec,
+                triedHypotheses: Set[Set[Literal]],
                 hypothesis: Set[Literal],
                 solutions: Map[Set[Literal], FailureSpec])
-    : Map[Set[Literal], FailureSpec] = {
+  : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = {
     if (hypothesis.nonEmpty)
       println(
         "\n\n**********************************************************************\n" +
@@ -114,9 +120,8 @@ object Evaluator {
           .distinct + "\n" +
           "**********************************************************************\n\n")
 
-    val correctness = forwardStep(
-      program,
-      hypothesis ++ failureSpec.cuts ++ failureSpec.crashes)
+    val updatedHypothesis = hypothesis ++ failureSpec.cuts ++ failureSpec.crashes
+    val correctness = forwardStep(program, updatedHypothesis, formula)
 
     //if we did not violate the correctness property we keep looking for failures
     if (correctness) {
@@ -124,38 +129,81 @@ object Evaluator {
       //perform the backward step to obtain the new CNF formula
       val (newHypotheses, updatedFailureSpec) =
         backwardStep(formula, failureSpec, freePassMessages, hypothesis)
+
       val sortedHypotheses =
         newHypotheses.toList
           .sortWith(getLatestLiteralTime(_) > getLatestLiteralTime(_))
           .toSet
+      //call evaluator recursively for every hypothesis
 
       //We keep evaluating only if we have new hypotheses
       if (sortedHypotheses.nonEmpty) {
-        //call evaluator recursively for every hypothesis
-        val result = sortedHypotheses.map { hypo =>
-          evaluator(program,
-                    freePassMessages,
-                    formula,
-                    updatedFailureSpec,
-                    hypo,
-                    solutions)
-        }
-        if (result.isEmpty) Map.empty
-        else result.reduceLeft(_ ++ _)
-      } else Map.empty
+        //We keep evaluating only if we have new hypotheses
+        iterateHypotheses(program,
+          freePassMessages,
+          formula,
+          failureSpec,
+          triedHypotheses + hypothesis,
+          sortedHypotheses.toList,
+          solutions)
+      } else (Map.empty, triedHypotheses + hypothesis)
     }
     //hypothesis is real solution
     else {
-      solutions + (hypothesis -> failureSpec)
+      (solutions + (hypothesis -> failureSpec), triedHypotheses + hypothesis)
     }
   }
 
-  def forwardStep(program: Program, hypothesis: Set[Literal]): Boolean = {
+  def iterateHypotheses(program: Program,
+                        freePassMessages: List[String],
+                        formula: Formula,
+                        failureSpec: FailureSpec,
+                        triedHypotheses: Set[Set[Literal]],
+                        hypotheses: List[Set[Literal]],
+                        solutions: Map[Set[Literal], FailureSpec])
+  : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = hypotheses match {
 
-    //Reset old info in Controller
-    Controller.reset()
-    //set controller injections
+    case Nil => (solutions, triedHypotheses)
+
+    case head :: tail if triedHypotheses.contains(head) =>
+      //if the hypothesis has been tried already then just keep iterating
+      iterateHypotheses(program,
+        freePassMessages,
+        formula,
+        failureSpec,
+        triedHypotheses,
+        tail,
+        solutions)
+
+    case head :: tail if !triedHypotheses.contains(head) =>
+      //get the solutions and the recursively tried hypotheses
+      val (sols, newlyTriedHypotheses) =
+        evaluator(program,
+          freePassMessages,
+          formula,
+          failureSpec,
+          triedHypotheses,
+          head,
+          solutions)
+
+      //now call iterator with tail, with updated solutions and hypotheses
+      iterateHypotheses(program,
+        freePassMessages,
+        formula,
+        failureSpec,
+        newlyTriedHypotheses ++ triedHypotheses,
+        tail,
+        sols ++ solutions)
+
+  }
+
+  def forwardStep(program: Program,
+                  hypothesis: Set[Literal],
+                  formula: Formula): Boolean = {
+
+    //set controller injections and formula
     Controller.setInjections(hypothesis)
+    Controller.setFormula(formula)
 
     //clear the logs for each run
     new PrintWriter("ldfi-akka/logs.log") {
@@ -187,20 +235,20 @@ object Evaluator {
     } catch {
       case ite: InvocationTargetException =>
         sys.error(
-          "Invocation of verify method failed. " + ite.getCause.getMessage)
+          "Invocation of verification method failed. " + ite.getCause.getMessage)
       case cce: ClassCastException =>
         sys.error(
-          "Cast ver method ret type to boolean fail. " + cce.getCause.getMessage)
+          "Casting the verification method's return type to boolean failed. " + cce.getCause.getMessage)
     }
     //return the correctness of the run
     correctness
   }
 
   def backwardStep(
-      formula: Formula,
-      failureSpec: FailureSpec,
-      freePassMsgs: List[String],
-      hypothesis: Set[Literal]): (Set[Set[Literal]], FailureSpec) = {
+                    formula: Formula,
+                    failureSpec: FailureSpec,
+                    freePassMsgs: List[String],
+                    hypothesis: Set[Literal]): (Set[Set[Literal]], FailureSpec) = {
     //Parse and format the program
     val input = Source.fromFile("ldfi-akka/logs.log")
     val format = AkkaParser.parse(input, freePassMsgs)
@@ -235,7 +283,7 @@ object Evaluator {
   }
 
   def prettyPrintFailureSpecs(
-      solutions: Map[Set[Literal], FailureSpec]): Unit = {
+                               solutions: Map[Set[Literal], FailureSpec]): Unit = {
     println(
       "\n\n" +
         "********************************************************\n" +
