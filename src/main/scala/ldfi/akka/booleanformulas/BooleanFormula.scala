@@ -155,7 +155,6 @@ class Clause(formula: Formula) {
   def getMessagesInClauseAsc: List[MessageLit] =
     literals.collect { case m: MessageLit => m }.sortWith(_.time < _.time)
 
-
   def getNodesInClause: Set[Node] =
     literals.collect { case n: Node => n }.sortWith(_.time > _.time).toSet
 
@@ -169,5 +168,5 @@ sealed trait Literal
 final case class Node(node: String, time: Int) extends Literal
 
 final case class MessageLit(sender: String, recipient: String, time: Int)(
-  val message: String)
-  extends Literal
+    val message: String)
+    extends Literal

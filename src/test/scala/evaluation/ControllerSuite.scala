@@ -14,35 +14,41 @@ class ControllerSuite extends FunSuite with Matchers {
 
   test("testing Controller.isInjected, is not injected") {
     val inj: Set[Literal] = Set.empty
-    assert(!isInjected(curSen, curRec, inj, 1, ""))
+    val (injected, _) = isInjected(curSen, curRec, inj, 1, "")
+    !injected
   }
 
   test("testing Controller.isInjected, is injected") {
     val inj: Set[Literal] = Set(msg.asInstanceOf[Literal])
-    assert(isInjected(curSen, curRec, inj, 1, ""))
+    val (injected, _) = isInjected(curSen, curRec, inj, 1, "")
+    injected
   }
 
   test("testing Controller.isInjected, sender crashed") {
     val inj: Set[Literal] = Set(node1.asInstanceOf[Literal])
-    assert(isInjected(curSen, curRec, inj, 1, ""))
+    val (injected, _) = isInjected(curSen, curRec, inj, 1, "")
+    injected
   }
 
   test("testing Controller.isInjected, recipient crashed") {
     val inj: Set[Literal] = Set(node2.asInstanceOf[Literal])
-    assert(isInjected(curSen, curRec, inj, 1, ""))
+    val (injected, _) = isInjected(curSen, curRec, inj, 1, "")
+    injected
   }
 
   test("testing Controller.isInjected, both nodes crashed") {
     val inj: Set[Literal] =
       Set(node1.asInstanceOf[Literal], node2.asInstanceOf[Literal])
-    assert(isInjected(curSen, curRec, inj, 1, ""))
+    val (injected, _) = isInjected(curSen, curRec, inj, 1, "")
+    injected
   }
 
   test("testing Controller.isInjected, msg cut & both crashed") {
     val inj: Set[Literal] = Set(msg.asInstanceOf[Literal],
                                 node1.asInstanceOf[Literal],
                                 node2.asInstanceOf[Literal])
-    assert(isInjected(curSen, curRec, inj, 1, ""))
+    val (injected, _) = isInjected(curSen, curRec, inj, 1, "")
+    injected
   }
 
   //Potentially needs some more edge-cases.

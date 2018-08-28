@@ -50,12 +50,12 @@ object Evaluator {
     //start evaluator with init failure spec and empty hypothesis
     val solutions =
       concreteEvaluator(program,
-        freePassMessages,
-        formula,
-        initFailureSpec,
-        initFailureSpec,
-        Set.empty,
-        Set.empty)
+                        freePassMessages,
+                        formula,
+                        initFailureSpec,
+                        initFailureSpec,
+                        Set.empty,
+                        Set.empty)
 
     //Print Failure Injections
     prettyPrintFailureSpecs(solutions)
@@ -63,39 +63,39 @@ object Evaluator {
   }
 
   def concreteEvaluator(
-                         program: Program,
-                         freePassMessages: List[String],
-                         formula: Formula,
-                         currentFailureSpec: FailureSpec,
-                         initFailureSpec: FailureSpec,
-                         triedHypotheses: Set[Set[Literal]],
-                         hypothesis: Set[Literal]): Map[Set[Literal], FailureSpec] =
+      program: Program,
+      freePassMessages: List[String],
+      formula: Formula,
+      currentFailureSpec: FailureSpec,
+      initFailureSpec: FailureSpec,
+      triedHypotheses: Set[Set[Literal]],
+      hypothesis: Set[Literal]): Map[Set[Literal], FailureSpec] =
     evaluator(program,
-      freePassMessages,
-      formula,
-      currentFailureSpec,
-      triedHypotheses,
-      hypothesis,
-      Map.empty) match {
+              freePassMessages,
+              formula,
+              currentFailureSpec,
+              triedHypotheses,
+              hypothesis,
+              Map.empty) match {
       case (m, allTriedHypos) if m.isEmpty =>
         if (currentFailureSpec.eff < currentFailureSpec.eot - 1) {
           val EFF = currentFailureSpec.eff
           concreteEvaluator(program,
-            freePassMessages,
-            new Formula,
-            initFailureSpec.copy(eff = EFF + 1),
-            initFailureSpec,
-            triedHypotheses ++ allTriedHypos,
-            hypothesis)
+                            freePassMessages,
+                            new Formula,
+                            initFailureSpec.copy(eff = EFF + 1),
+                            initFailureSpec,
+                            triedHypotheses ++ allTriedHypos,
+                            hypothesis)
         } else if (currentFailureSpec.maxCrashes < formula.getLatestTime - 1) {
           val maxCrashes = currentFailureSpec.maxCrashes
           concreteEvaluator(program,
-            freePassMessages,
-            new Formula,
-            initFailureSpec.copy(maxCrashes = maxCrashes + 1),
-            initFailureSpec,
-            triedHypotheses ++ allTriedHypos,
-            hypothesis)
+                            freePassMessages,
+                            new Formula,
+                            initFailureSpec.copy(maxCrashes = maxCrashes + 1),
+                            initFailureSpec,
+                            triedHypotheses ++ allTriedHypos,
+                            hypothesis)
         } else {
           Map.empty
         }
@@ -109,7 +109,7 @@ object Evaluator {
                 triedHypotheses: Set[Set[Literal]],
                 hypothesis: Set[Literal],
                 solutions: Map[Set[Literal], FailureSpec])
-  : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = {
+    : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = {
     if (hypothesis.nonEmpty)
       println(
         "\n\n**********************************************************************\n" +
@@ -140,12 +140,12 @@ object Evaluator {
       if (sortedHypotheses.nonEmpty) {
         //We keep evaluating only if we have new hypotheses
         iterateHypotheses(program,
-          freePassMessages,
-          formula,
-          failureSpec,
-          triedHypotheses + hypothesis,
-          sortedHypotheses.toList,
-          solutions)
+                          freePassMessages,
+                          formula,
+                          updatedFailureSpec,
+                          triedHypotheses + hypothesis,
+                          sortedHypotheses.toList,
+                          solutions)
       } else (Map.empty, triedHypotheses + hypothesis)
     }
     //hypothesis is real solution
@@ -161,39 +161,39 @@ object Evaluator {
                         triedHypotheses: Set[Set[Literal]],
                         hypotheses: List[Set[Literal]],
                         solutions: Map[Set[Literal], FailureSpec])
-  : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = hypotheses match {
+    : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = hypotheses match {
 
     case Nil => (solutions, triedHypotheses)
 
     case head :: tail if triedHypotheses.contains(head) =>
       //if the hypothesis has been tried already then just keep iterating
       iterateHypotheses(program,
-        freePassMessages,
-        formula,
-        failureSpec,
-        triedHypotheses,
-        tail,
-        solutions)
+                        freePassMessages,
+                        formula,
+                        failureSpec,
+                        triedHypotheses,
+                        tail,
+                        solutions)
 
     case head :: tail if !triedHypotheses.contains(head) =>
       //get the solutions and the recursively tried hypotheses
       val (sols, newlyTriedHypotheses) =
         evaluator(program,
-          freePassMessages,
-          formula,
-          failureSpec,
-          triedHypotheses,
-          head,
-          solutions)
+                  freePassMessages,
+                  formula,
+                  failureSpec,
+                  triedHypotheses,
+                  head,
+                  solutions)
 
       //now call iterator with tail, with updated solutions and hypotheses
       iterateHypotheses(program,
-        freePassMessages,
-        formula,
-        failureSpec,
-        newlyTriedHypotheses ++ triedHypotheses,
-        tail,
-        sols ++ solutions)
+                        freePassMessages,
+                        formula,
+                        failureSpec,
+                        newlyTriedHypotheses ++ triedHypotheses,
+                        tail,
+                        sols ++ solutions)
 
   }
 
@@ -245,10 +245,10 @@ object Evaluator {
   }
 
   def backwardStep(
-                    formula: Formula,
-                    failureSpec: FailureSpec,
-                    freePassMsgs: List[String],
-                    hypothesis: Set[Literal]): (Set[Set[Literal]], FailureSpec) = {
+      formula: Formula,
+      failureSpec: FailureSpec,
+      freePassMsgs: List[String],
+      hypothesis: Set[Literal]): (Set[Set[Literal]], FailureSpec) = {
     //Parse and format the program
     val input = Source.fromFile("ldfi-akka/logs.log")
     val format = AkkaParser.parse(input, freePassMsgs)
@@ -283,7 +283,7 @@ object Evaluator {
   }
 
   def prettyPrintFailureSpecs(
-                               solutions: Map[Set[Literal], FailureSpec]): Unit = {
+      solutions: Map[Set[Literal], FailureSpec]): Unit = {
     println(
       "\n\n" +
         "********************************************************\n" +

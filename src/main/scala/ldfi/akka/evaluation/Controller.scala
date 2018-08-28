@@ -19,7 +19,18 @@ object Controller {
 
       val greenLight = clauseClock.forall {
         case (cId, time) =>
-          !isInjected(sender, recipient, injections, time, message)
+          val (injected, msgcut) =
+            isInjected(sender, recipient, injections, time, message)
+
+          //If message has been injected, remove it from the injections set
+          if (msgcut) {
+            val msg = MessageLit(sender, recipient, time)(message.toString)
+            this.injections = injections.filter {
+              case m: MessageLit => m != msg
+              case n: Node       => true
+            }
+          }
+          !injected
       }
       greenLight
     } else {
@@ -32,8 +43,7 @@ object Controller {
                  rec: String,
                  injections: Set[Literal],
                  time: Int,
-                 message: Any): Boolean = {
-    val msg = MessageLit(sen, rec, time)(message.toString)
+                 message: Any): (Boolean, Boolean) = {
 
     val msgcut =
       injections.collect {
@@ -50,17 +60,9 @@ object Controller {
       case n @ Node(name, tme) if rec == name && tme <= time => n
     }.nonEmpty
 
-    //If message has been injected, remove it from the injections set
-    if (msgcut) {
-      this.injections = injections.filter {
-        case m: MessageLit => m != msg
-        case n: Node       => true
-      }
-    }
-
     //We send OK if the message is not omitted and neither node is crashed
     val isInjected = msgcut || senderCrashed || recipientCrashed
-    isInjected
+    (isInjected, msgcut)
   }
 
   def manageClock(sender: String,

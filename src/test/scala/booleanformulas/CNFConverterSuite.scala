@@ -11,9 +11,9 @@ class CNFConverterSuite extends FunSuite with Matchers {
   val row: Row = Row("A", "B", 1, "")
   val msg: MessageLit = MessageLit("A", "B", 1)("")
 
-  test("Testing CNFConverter.addRowToClause"){
+  test("Testing CNFConverter.addRowToClause") {
     CNFConverter.addRowToClause(clause, row)
-    clause.getLiteralsInClause should contain (msg)
+    clause.getLiteralsInClause should contain(msg)
   }
 
   test("Testing CNFConverter.getMessage") {
