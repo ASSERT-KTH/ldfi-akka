@@ -54,7 +54,6 @@ object Evaluator {
                         formula,
                         initFailureSpec,
                         initFailureSpec,
-                        Set.empty,
                         Set.empty)
 
     //Print Failure Injections
@@ -68,14 +67,13 @@ object Evaluator {
       formula: Formula,
       currentFailureSpec: FailureSpec,
       initFailureSpec: FailureSpec,
-      triedHypotheses: Set[Set[Literal]],
-      hypothesis: Set[Literal]): Map[Set[Literal], FailureSpec] =
+      triedHypotheses: Set[Set[Literal]]): Map[Set[Literal], FailureSpec] =
     evaluator(program,
               freePassMessages,
               formula,
               currentFailureSpec,
               triedHypotheses,
-              hypothesis,
+              Set.empty,
               Map.empty) match {
       case (m, allTriedHypos) if m.isEmpty =>
         if (currentFailureSpec.eff < currentFailureSpec.eot - 1) {
@@ -85,8 +83,7 @@ object Evaluator {
                             new Formula,
                             initFailureSpec.copy(eff = EFF + 1),
                             initFailureSpec,
-                            triedHypotheses ++ allTriedHypos,
-                            hypothesis)
+                            triedHypotheses ++ allTriedHypos)
         } else if (currentFailureSpec.maxCrashes < formula.getLatestTime - 1) {
           val maxCrashes = currentFailureSpec.maxCrashes
           concreteEvaluator(program,
@@ -94,8 +91,7 @@ object Evaluator {
                             new Formula,
                             initFailureSpec.copy(maxCrashes = maxCrashes + 1),
                             initFailureSpec,
-                            triedHypotheses ++ allTriedHypos,
-                            hypothesis)
+                            triedHypotheses ++ allTriedHypos)
         } else {
           Map.empty
         }
@@ -139,13 +135,13 @@ object Evaluator {
       //We keep evaluating only if we have new hypotheses
       if (sortedHypotheses.nonEmpty) {
         //We keep evaluating only if we have new hypotheses
-        iterateHypotheses(program,
-                          freePassMessages,
-                          formula,
-                          updatedFailureSpec,
-                          triedHypotheses + hypothesis,
-                          sortedHypotheses.toList,
-                          solutions)
+        evaluateHypotheses(program,
+                           freePassMessages,
+                           formula,
+                           updatedFailureSpec,
+                           triedHypotheses + hypothesis,
+                           sortedHypotheses.toList,
+                           solutions)
       } else (Map.empty, triedHypotheses + hypothesis)
     }
     //hypothesis is real solution
@@ -154,26 +150,26 @@ object Evaluator {
     }
   }
 
-  def iterateHypotheses(program: Program,
-                        freePassMessages: List[String],
-                        formula: Formula,
-                        failureSpec: FailureSpec,
-                        triedHypotheses: Set[Set[Literal]],
-                        hypotheses: List[Set[Literal]],
-                        solutions: Map[Set[Literal], FailureSpec])
+  def evaluateHypotheses(program: Program,
+                         freePassMessages: List[String],
+                         formula: Formula,
+                         failureSpec: FailureSpec,
+                         triedHypotheses: Set[Set[Literal]],
+                         hypotheses: List[Set[Literal]],
+                         solutions: Map[Set[Literal], FailureSpec])
     : (Map[Set[Literal], FailureSpec], Set[Set[Literal]]) = hypotheses match {
 
     case Nil => (solutions, triedHypotheses)
 
     case head :: tail if triedHypotheses.contains(head) =>
       //if the hypothesis has been tried already then just keep iterating
-      iterateHypotheses(program,
-                        freePassMessages,
-                        formula,
-                        failureSpec,
-                        triedHypotheses,
-                        tail,
-                        solutions)
+      evaluateHypotheses(program,
+                         freePassMessages,
+                         formula,
+                         failureSpec,
+                         triedHypotheses,
+                         tail,
+                         solutions)
 
     case head :: tail if !triedHypotheses.contains(head) =>
       //get the solutions and the recursively tried hypotheses
@@ -187,13 +183,13 @@ object Evaluator {
                   solutions)
 
       //now call iterator with tail, with updated solutions and hypotheses
-      iterateHypotheses(program,
-                        freePassMessages,
-                        formula,
-                        failureSpec,
-                        newlyTriedHypotheses ++ triedHypotheses,
-                        tail,
-                        sols ++ solutions)
+      evaluateHypotheses(program,
+                         freePassMessages,
+                         formula,
+                         failureSpec,
+                         newlyTriedHypotheses ++ triedHypotheses,
+                         tail,
+                         sols ++ solutions)
 
   }
 

@@ -69,35 +69,33 @@ object Controller {
                   recipient: String,
                   message: String,
                   clauses: List[Clause],
-                  clauseClock: Map[Int, Int]): Map[Int, Int] = {
-    clauses
-      .map { c =>
-        val time = clauseClock.get(c.getId) match {
-          case Some(t) => t
-          case None =>
-            sys.error("Controller: could not find clauseId in clauseClock.")
-        }
-
-        val potentialTime = time + 1
-        val msg = MessageLit(sender, recipient, potentialTime)(message)
-
-        if (c.literalExistsInClause(msg)) {
-          Map(c.getId -> potentialTime)
-        } else {
-          //get the first message where the sender is active and update clause clock to that time if such a message exists
-          val updatedTime = c.getMessagesInClauseAsc.collectFirst {
-            case msg: MessageLit if msg.sender == sender && msg.time > time =>
-              msg.time
-          }
-          updatedTime match {
-            case Some(t) => Map(c.getId -> t)
-            case None    => Map(c.getId -> time)
-          }
-        }
-
+                  clauseClock: Map[Int, Int]): Map[Int, Int] = clauses match {
+    case Nil => Map.empty
+    case clause :: tail =>
+      val time = clauseClock.get(clause.getId) match {
+        case Some(t) => t
+        case None =>
+          sys.error("Controller: could not find clauseId in clauseClock.")
       }
-      .reduceLeft(_ ++ _)
 
+      val potentialTime = time + 1
+      val msg = MessageLit(sender, recipient, potentialTime)(message)
+
+      val res = if (clause.literalExistsInClause(msg)) {
+        Map(clause.getId -> potentialTime)
+      } else {
+        //get the first message where the sender is active and update clause clock to that time if such a message exists
+        val updatedTime = clause.getMessagesInClauseAsc.collectFirst {
+          case msg: MessageLit if msg.sender == sender && msg.time > time =>
+            msg.time
+        }
+        updatedTime match {
+          case Some(t) => Map(clause.getId -> t)
+          case None    => Map(clause.getId -> time)
+        }
+      }
+
+      res ++ manageClock(sender, recipient, message, tail, clauseClock)
   }
 
   def setFormula(form: Formula): Unit = {
