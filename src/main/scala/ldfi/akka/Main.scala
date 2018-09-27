@@ -86,15 +86,17 @@ object Main {
     val (mainCls, mainMeth) = reflectClass(mainClass, "main")
     val (verifyCls, verifyMeth) = reflectClass(verifyClass, verMeth)
 
-    val program = Program(mainCls, mainMeth, verifyCls, verifyMeth)
+    val program =
+      Program(mainCls, mainMeth, verifyCls, verifyMeth, freePassMessages)
 
-    Evaluator.evaluate(program, freePassMessages)
+    Evaluator.evaluate(program)
 
   }
 
   def reflectClass(cls: File, methodName: String): (Class[_], Method) = {
     try {
       //convert path to specified class: e.g. com/proj/Main.scala => com.proj.Main
+
       val relativePath =
         cls.getCanonicalPath.split("src/main/scala/").lift(1) match {
           case Some(path) => path.replaceAll("/", ".").replaceAll(".scala", "")
@@ -226,6 +228,7 @@ object Main {
   case class Program(mainClass: Class[_],
                      mainMethod: Method,
                      verifyClass: Class[_],
-                     verifyMethod: Method)
+                     verifyMethod: Method,
+                     freePassMessages: List[String])
 
 }

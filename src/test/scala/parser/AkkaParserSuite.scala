@@ -9,7 +9,7 @@ import scala.io.Source
 
 class AkkaParserSuite extends FunSuite with Matchers {
 
-  val logs = Source
+  val logs: Array[String] = Source
     .fromFile("src/test/scala/parser/testLogs.log")
     .mkString
     .split("\n\n")
@@ -18,12 +18,12 @@ class AkkaParserSuite extends FunSuite with Matchers {
   logs.lift(0) match {
     case Some(input) =>
       val src = Source.fromString(input)
-      val res: FormattedLogs = AkkaParser.parse(src, List("Start"))
+      val res = AkkaParser.parse(src, List("Start"))
       test("Testing AkkaParser.parse: B received from A, C received from A") {
         assert(
           res == FormattedLogs(
             List(Row("A", "B", 1, "Broadcast(Some payload)"),
-                 Row("A", "C", 2, "Broadcast(Some payload)"))))
+              Row("A", "C", 2, "Broadcast(Some payload)"))))
       }
     case None => println("testLogs are empty at position " + 0)
   }
@@ -32,11 +32,8 @@ class AkkaParserSuite extends FunSuite with Matchers {
   logs.lift(1) match {
     case Some(input) =>
       val src = Source.fromString(input)
-      val res: FormattedLogs = AkkaParser.parse(
-        src,
-        List("Start"))
-      test(
-        "Testing AkkaParser.parse B received from A") {
+      val res = AkkaParser.parse(src, List("Start"))
+      test("Testing AkkaParser.parse B received from A") {
         assert(
           res == FormattedLogs(
             List(Row("A", "B", 1, "Broadcast(Some payload)"))))
@@ -44,16 +41,14 @@ class AkkaParserSuite extends FunSuite with Matchers {
     case None => println("testLogs are empty at position " + 1)
   }
 
-
   //C receives from A, C receives from A
   logs.lift(2) match {
     case Some(input) =>
       val src = Source.fromString(input)
-      val res: FormattedLogs = AkkaParser.parse(src, List("Start"))
-      test(
-        "Testing AkkaParser.parse: C received from A, C received from A ") {
+      val res = AkkaParser.parse(src, List("Start"))
+      test("Testing AkkaParser.parse: C received from A, C received from A ") {
         val rows = List(Row("A", "C", 1, "Broadcast(Some payload)"),
-                        Row("A", "C", 2, "Broadcast(Some payload)"))
+          Row("A", "C", 2, "Broadcast(Some payload)"))
         assert(res == FormattedLogs(rows))
       }
     case None => println("testLogs are empty at position " + 2)
@@ -63,15 +58,12 @@ class AkkaParserSuite extends FunSuite with Matchers {
   logs.lift(3) match {
     case Some(input) =>
       val src = Source.fromString(input)
-      val res: FormattedLogs = AkkaParser.parse(
-        src,
-        List("Start"))
-      test(
-        "Testing AkkaParser.parse: C received from A, B received from A") {
+      val res = AkkaParser.parse(src, List("Start"))
+      test("Testing AkkaParser.parse: C received from A, B received from A") {
         assert(
           res == FormattedLogs(
             List(Row("A", "C", 1, "Broadcast(Some payload)"),
-                 Row("A", "B", 2, "Broadcast(Some payload)"))))
+              Row("A", "B", 2, "Broadcast(Some payload)"))))
       }
     case None => println("testLogs are empty at position " + 3)
   }
@@ -80,15 +72,12 @@ class AkkaParserSuite extends FunSuite with Matchers {
   logs.lift(4) match {
     case Some(input) =>
       val src = Source.fromString(input)
-      val res: FormattedLogs = AkkaParser.parse(
-        src,
-        List("Start"))
-      test(
-        "Testing AkkaParser.parse: C received from A, B received from C") {
+      val res = AkkaParser.parse(src, List("Start"))
+      test("Testing AkkaParser.parse: C received from A, B received from C") {
         assert(
           res == FormattedLogs(
             List(Row("A", "C", 1, "Broadcast(Some payload)"),
-                 Row("C", "B", 2, "Broadcast(Some payload)"))))
+              Row("C", "B", 2, "Broadcast(Some payload)"))))
       }
     case None => println("testLogs are empty at position " + 4)
   }
@@ -97,16 +86,14 @@ class AkkaParserSuite extends FunSuite with Matchers {
   logs.lift(5) match {
     case Some(input) =>
       val src = Source.fromString(input)
-      val res: FormattedLogs = AkkaParser.parse(
-        src,
-        List("Start"))
+      val res = AkkaParser.parse(src, List("Start"))
       test(
         "Testing AkkaParser.parse: C received from A, D received from A, B received from C") {
         assert(
           res == FormattedLogs(
             List(Row("A", "C", 1, "Broadcast(Some payload)"),
-                 Row("A", "D", 2, "Broadcast(Some payload)"),
-                 Row("C", "B", 3, "Broadcast(Some payload)"))))
+              Row("A", "D", 2, "Broadcast(Some payload)"),
+              Row("C", "B", 3, "Broadcast(Some payload)"))))
       }
     case None => println("testLogs are empty at position " + 5)
   }
@@ -114,19 +101,25 @@ class AkkaParserSuite extends FunSuite with Matchers {
   test("Testing AkkaParser.parseSender") {
     val line =
       "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
-    val sender: String = AkkaParser.parseSender(line)
+    val sender = AkkaParser.parseSender(line)
     sender shouldEqual "A"
   }
 
   test("Testing AkkaParser.parseRecipient") {
-    val line =
+    val localLine =
       "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
-    val recipient: String = AkkaParser.parseRecipient(line)
-    recipient shouldEqual "C"
+    val clusterLine =
+      "DEBUG[ExampleSpec-akka.actor.default-dispatcher-18]akka.tcp://ExampleSpec@localhost:34973/user/batching-server-receivedhandledmessageEvent(ClusterListenerIs(Actor[akka://ExampleSpec/user/raft-cluster#-26111901]),Data(Log(0,List()),Term(0),Set(),None,0))fromActor[akka://ExampleSpec/user/raft-cluster#-26111901]"
+
+    val localRec = AkkaParser.parseRecipient(localLine)
+    val clusterRec = AkkaParser.parseRecipient(clusterLine)
+
+    localRec shouldEqual "C"
+    clusterRec shouldEqual "batching-server"
   }
 
   test("Testing AkkaParser.parseMessage") {
-    val line: String =
+    val line =
       "DEBUG[system-akka.actor.default-dispatcher-3]akka://system/user/C-receivedhandledmessageBroadcast(Somepayload)fromActor[akka://system/user/A#-1746850710]"
     val message = AkkaParser.parseMessage(line)
     message shouldEqual "Broadcast(Somepayload)"

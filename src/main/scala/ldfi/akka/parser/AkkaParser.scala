@@ -1,6 +1,5 @@
 package ldfi.akka.parser
 
-import ldfi.akka.booleanformulas._
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
@@ -14,20 +13,21 @@ object AkkaParser {
     def reset(): Unit = time = 0
   }
 
-  def parse(input: Source,
-            freePassMsgs: List[String]): FormattedLogs = {
+  def parse(input: Source, freePassMsgs: List[String]): FormattedLogs = {
     Clock.reset()
     var formattedLogs = ListBuffer[Row]()
     var previousSender, previousRecipient = ""
     val lines =
-      input.getLines.filter(x => x.contains("received handled message"))
+      input.getLines
+        .filter(x => x.contains("received handled message"))
+        .filter(x => x.contains("DEBUG"))
 
     for (line <- lines) {
       val filteredLine = line.replaceAll("\\s", "")
       val (currentSender, currentRecipient, currentMessage) =
         (parseSender(filteredLine),
-         parseRecipient(filteredLine),
-         parseMessage(line))
+          parseRecipient(filteredLine),
+          parseMessage(line))
       val isNotFreePass = freePassMsgs.forall(freePassMessage =>
         !currentMessage.contains(freePassMessage))
 
@@ -38,9 +38,9 @@ object AkkaParser {
         previousSender = currentSender
         previousRecipient = currentRecipient
         formattedLogs += Row(currentSender,
-                             currentRecipient,
-                             time,
-                             currentMessage)
+          currentRecipient,
+          time,
+          currentMessage)
       }
     }
     val format = FormattedLogs(formattedLogs.toList)
@@ -61,7 +61,7 @@ object AkkaParser {
   }
 
   def parseRecipient(line: String): String = {
-    val pattern = """(?<=akka:)(.+)(?=-received)""".r
+    val pattern = """(?<=]akka)(.+)(?=-received)""".r
     var recipient = ""
     pattern.findAllIn(line).matchData foreach { m =>
       recipient = m.group(0);

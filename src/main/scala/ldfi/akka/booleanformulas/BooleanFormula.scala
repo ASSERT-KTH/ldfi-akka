@@ -34,6 +34,13 @@ class Formula {
     }
   }
 
+  def getClause(id: Int): Clause = {
+    val clause = clauses.filter(_.getId == id)
+    if (clause.lengthCompare(1) != 0)
+      sys.error("Could not find clause in formula with id: " + id)
+    else clause.head
+  }
+
   def clauseExistInFormula(clause: Clause): Boolean =
     clauses.exists(c => clause.getLiteralsInClause == c.getLiteralsInClause)
 
@@ -43,11 +50,22 @@ class Formula {
   def getAllNodes: Set[Node] =
     clauses.flatMap(c => c.getNodesInClause).sortWith(_.time > _.time).toSet
 
+  def getClauses: List[Clause] = clauses
+
   def getAllMessages: List[MessageLit] =
     clauses
       .flatMap(c => c.getMessagesInClauseDesc)
       .sortWith(_.time > _.time)
       .distinct
+
+  def getNumberOfNodesInFormula: Int =
+    clauses.flatMap(c => c.getNodesInClause).toSet.size
+
+  def getUniqueNodes: List[String] =
+    clauses.flatMap(c => c.getNodesInClause).map(n => n.node).distinct
+
+  def getNumberOfUniqueNodes: Int =
+    clauses.flatMap(c => c.getNodesInClause).map(n => n.node).distinct.size
 
   def literalExistsInFormula(literal: Literal): Boolean =
     literalsToId.contains(literal)
@@ -130,7 +148,7 @@ class Formula {
 
 class Clause(formula: Formula) {
   var literals: List[Literal] = List.empty
-  private var id: Int = 0
+  private var id: Int = _
 
   def setId(newID: Int): Unit = id = newID
 
@@ -141,13 +159,8 @@ class Clause(formula: Formula) {
     literals = literal :: literals
   }
 
-  def getLiteralsInClause: List[Literal] = {
-    def getTimeFromLit(lit: Literal): Int = lit match {
-      case m: MessageLit => m.time
-      case n: Node       => n.time
-    }
+  def getLiteralsInClause: List[Literal] =
     literals.sortWith(getTimeFromLit(_) > getTimeFromLit(_))
-  }
 
   def getMessagesInClauseDesc: List[MessageLit] =
     literals.collect { case m: MessageLit => m }.sortWith(_.time > _.time)
@@ -161,6 +174,13 @@ class Clause(formula: Formula) {
   def literalExistsInClause(literal: Literal): Boolean =
     literals.contains(literal)
 
+  def getLatestTimeInClause: Int = getMessagesInClauseDesc.head.time
+
+  def getTimeFromLit(lit: Literal): Int = lit match {
+    case m: MessageLit => m.time
+    case n: Node       => n.time
+  }
+
 }
 
 sealed trait Literal
@@ -168,5 +188,5 @@ sealed trait Literal
 final case class Node(node: String, time: Int) extends Literal
 
 final case class MessageLit(sender: String, recipient: String, time: Int)(
-    val message: String)
-    extends Literal
+  val message: String)
+  extends Literal

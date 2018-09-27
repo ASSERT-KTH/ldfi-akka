@@ -4,13 +4,15 @@ import ldfi.akka.parser.AkkaParser._
 
 object CNFConverter {
 
-  def run(formattedLog: FormattedLogs, formula: Formula): Unit = {
+  def run(formattedLog: FormattedLogs, formula: Formula): (Clause, Boolean) = {
     val clause = new Clause(formula)
     for (line <- formattedLog.rows) {
       addRowToClause(clause, line)
     }
     //prettyPrintClause(clause)
+    val existsInFormula = formula.clauseExistInFormula(clause)
     formula.addClause(clause)
+    (clause, existsInFormula)
   }
 
   def addRowToClause(clause: Clause, line: Row): Unit = {
@@ -35,33 +37,31 @@ object CNFConverter {
   def getMessage(line: Row): MessageLit =
     MessageLit(line.sender, line.recipient, line.time)(line.message)
 
-  def prettyPrintClause(clause: Clause): Unit = {
-    for ((literal, cnt) <- clause.literals.zipWithIndex) {
-      literal match {
-        case Node(node, time) => print("P(" + node + ", " + time + ")")
+  //Helper functions
+  def getPrettyClause(clause: Clause, nodes: Boolean): String = {
+    clause.getLiteralsInClause
+      .map {
+        case Node(node, time) if nodes =>
+          "P(" + node + ", " + time + ") ∨ "
+        case Node(node, time) if !nodes =>
+          ""
         case MessageLit(sender, recipient, time) =>
-          print(
-            "M(" + sender + ", " + recipient + ", " + time + ")")
-        case _ =>
-          println(
-            "ERROR in CNFConverter.prettyPrintClause: literal not Node or Message!")
+          "M(" + sender + ", " + recipient + ", " + time + ") ∨ "
       }
-      if (cnt != clause.literals.size - 1) {
-        print(" V ")
-      }
-    }
+      .reduceLeft(_ ++ _)
+      .dropRight(3)
   }
 
-  def prettyPrintFormula(formula: Formula): Unit = {
-    println("\n\nBoolean Formula:")
-    for ((clause, cnt) <- formula.clauses.zipWithIndex) {
-      print("(")
-      prettyPrintClause(clause)
-      if (cnt < formula.clauses.size - 1) {
-        print(") ∧\n")
-      }
+  def getPrettyFormula(formula: Formula, nodes: Boolean): String = {
+    formula.getClauses.map { c =>
+      "[" + getPrettyClause(c, nodes) + "] ∧\n"
     }
-    print(")\n\n")
+      .reduceLeft(_ ++ _)
+      .dropRight(3)
+  }
+
+  def prettyPrintFormula(formula: Formula, nodes: Boolean): Unit = {
+    println("\n\nBoolean Formula: \n" + getPrettyFormula(formula, nodes))
   }
 
 }
